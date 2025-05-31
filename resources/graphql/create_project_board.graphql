@@ -1,0 +1,19 @@
+mutation CreateBoard($boardName: String!, $boardKind: BoardKind!, $templateId: ID, $ownerIds: [ID!], $workspaceId: ID) {
+    create_board (
+        board_name: $boardName,
+        board_kind: $boardKind,
+        template_id: $templateId,
+        board_owner_ids: $ownerIds,
+        workspace_id: $workspaceId
+        # You can add other arguments like folder_id, description as needed from the documentation [cite: 1]
+    ) {
+        id
+        name
+        # You can query back other fields from the new board if needed
+        # For example:
+        # workspace_id
+        # owners {
+        #   id
+        # }
+    }
+}
