@@ -1,0 +1,18 @@
+query GetPortfolioItemMirrorLinkDetails($portfolioItemId: [ID!], $portfolioBoardId: [ID!]) { # Removed $mirrorColumnId from variables
+  boards(ids: $portfolioBoardId) {
+    items_page(query_params: {ids: $portfolioItemId}) {
+      items {
+        id
+        column_values { # Fetch all column_values for this item
+          id
+          type
+          ... on MirrorValue {
+            mirrored_items {
+              linked_board_id
+            }
+          }
+        }
+      }
+    }
+  }
+}

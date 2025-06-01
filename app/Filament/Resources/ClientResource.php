@@ -112,6 +112,7 @@ class ClientResource extends Resource
     {
         return [
             RelationManagers\BusinessesRelationManager::class,
+            RelationManagers\UsersRelationManager::class,
         ];
     }
 

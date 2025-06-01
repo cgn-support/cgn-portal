@@ -1,0 +1,21 @@
+query GetPortfolioItemDetails(
+    $portfolioBoardId: [ID!],
+    $portfolioItemId: [ID!],
+    $columnIds: [String!] # Array of column IDs we want to fetch
+  ) {
+  boards(ids: $portfolioBoardId) {
+    items_page(query_params: {ids: $portfolioItemId}) {
+      items {
+        id
+        name
+        column_values(ids: $columnIds) {
+          id
+          text
+          value # This is often a JSON string for complex columns (status, person, mirror, connect boards, doc)
+          type
+          # additional_info # Can be useful for some column types
+        }
+      }
+    }
+  }
+}

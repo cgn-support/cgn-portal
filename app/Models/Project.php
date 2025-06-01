@@ -9,29 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-// For Laravel 9+ UUID handling
-
-// Optional: if you want soft deletes for projects
-
 class Project extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
-
-    // Added HasUuids and SoftDeletes (optional)
-
-    /**
-     * Indicates if the model's ID is auto-incrementing.
-     *
-     * @var bool
-     */
-    // public $incrementing = false; // Not needed if using HasUuids trait
-
-    /**
-     * The data type of the auto-incrementing ID.
-     *
-     * @var string
-     */
-    // protected $keyType = 'string'; // Not needed if using HasUuids trait
 
     /**
      * The attributes that are mass assignable.
@@ -39,23 +19,34 @@ class Project extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'user_id', // Account Manager responsible for the project
-        'business_id', // The business this project belongs to (IMPORTANT: ensure this is in your migration)
-        'plan_id', // Optional: if projects are tied to specific service plans
+        'user_id',          // This will now be the CLIENT User ID
+        'account_manager_id', // NEW: For the Account Manager User ID
+        'business_id',
+        'plan_id',
+        'name', // Added 'name' as it's usually fillable
         'monday_pulse_id',
         'monday_board_id',
-        'portfolio_project_rag', // RAG status (Red, Amber, Green)
-        'portfolio_project_doc', // JSON for project documentation/details
+        'portfolio_project_rag',
+        'portfolio_project_doc',
         'portfolio_project_scope',
-        'google_sheet_id', // For content topics or other data
-        'bright_local_url', // Link to Bright Local reporting dashboard
+        'project_url',              // Was 'Domain', maps to this
+        'current_services',         // NEW
+        'completed_services',       // NEW
+        'specialist_monday_id',     // NEW
+        'content_writer_monday_id', // NEW
+        'developer_monday_id',      // NEW
+        'copywriter_monday_id',     // NEW
+        'designer_monday_id',       // NEW
+        'google_drive_folder',      // Was 'Drive Folder ID'
+        'client_logo',
+        'slack_channel',            // Was 'Slack Channel ID'
+        'bright_local_url',         // Was 'Bright Local ID', assuming it's a URL or you store ID as URL
+        'google_sheet_id',          // Was 'Project Workbook ID'
+        'wp_umbrella_project_id',   // Was 'WP Umbrella ID'
         'project_start_date',
-        'project_url', // Client's project website URL (e.g., the live website)
-        'wordpress_api_url', // Specific URL for WordPress API if different from project_url and needed for content pulling
-        'google_drive_folder',
+        // 'wordpress_api_url', // Keep if you still need this separate from project_url
         'my_maps_share_link',
-        'wp_umbrella_project_id',
-        'status', // e.g., 'active', 'paused', 'completed', 'cancelled'
+        'status',
     ];
 
     /**
@@ -64,9 +55,10 @@ class Project extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'portfolio_project_doc' => 'array', // Casts the JSON column to an array
-        'project_start_date' => 'date',     // Casts to a Carbon date instance (not datetime)
-        // 'id' => 'string', // Not strictly necessary with HasUuids but good for clarity
+        'portfolio_project_doc' => 'array',
+        'project_start_date' => 'date',
+        'current_services' => 'array',   // NEW: Cast comma-separated string to array
+        'completed_services' => 'array', // NEW: Cast comma-separated string to array
     ];
 
     /**
@@ -75,38 +67,28 @@ class Project extends Model
      * @var array
      */
     protected $attributes = [
-        'status' => 'active', // Default project status
+        'status' => 'active',
     ];
 
-    // If not using HasUuids (e.g., older Laravel versions or custom UUID generation):
-    // protected static function boot()
-    // {
-    //     parent::boot();
-    //     static::creating(function ($model) {
-    //         if (empty($model->{$model->getKeyName()})) {
-    //             $model->{$model->getKeyName()} = (string) \Illuminate\Support\Str::uuid();
-    //         }
-    //     });
-    // }
-
     /**
-     * Get the user (Account Manager) assigned to this project.
+     * Get the client user associated with this project.
+     * (user_id now refers to the client)
      */
-    public function accountManager(): BelongsTo
+    public function clientUser(): BelongsTo
     {
-        // Renamed from user() to be more descriptive, assuming user_id is for the AM
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    public function user(): BelongsTo
+    /**
+     * Get the Account Manager (User) assigned to this project.
+     */
+    public function accountManager(): BelongsTo
     {
-        // Alias for backward compatibility or other uses
-        return $this->accountManager();
+        return $this->belongsTo(User::class, 'account_manager_id');
     }
 
     /**
      * Get the business this project belongs to.
-     * This assumes you have added 'business_id' to your 'projects' table.
      */
     public function business(): BelongsTo
     {
@@ -127,7 +109,6 @@ class Project extends Model
      */
     public function leads(): HasMany
     {
-        // This assumes your 'Lead' model has a 'project_id' foreign key
         return $this->hasMany(Lead::class);
     }
 
@@ -136,7 +117,6 @@ class Project extends Model
      */
     public function updates(): HasMany
     {
-        // This assumes your 'Update' model has a 'project_id' foreign key
         return $this->hasMany(Update::class);
     }
 
@@ -145,7 +125,6 @@ class Project extends Model
      */
     public function notes(): HasMany
     {
-        // This assumes your 'Note' model has a 'project_id' foreign key
         return $this->hasMany(Note::class);
     }
 
@@ -154,7 +133,6 @@ class Project extends Model
      */
     public function reports(): HasMany
     {
-        // This assumes your 'Report' model has a 'project_id' foreign key
         return $this->hasMany(Report::class);
     }
 
@@ -163,7 +141,6 @@ class Project extends Model
      */
     public function tasks(): HasMany
     {
-        // This assumes your 'Task' model has a 'project_id' foreign key
         return $this->hasMany(Task::class);
     }
 }

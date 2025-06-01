@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Services\MondayApiService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +12,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(MondayApiService::class, function ($app) {
+            $token = config('services.monday.token');
+            $apiUrl = config('services.monday.url');
+            $portfolioBoardId = config('services.monday.portfolio_board_id'); // This should now pick up 8914323121
+
+            if (empty($token) || empty($portfolioBoardId) || empty($apiUrl)) {
+                \Illuminate\Support\Facades\Log::error('CRITICAL: Monday API Service is not configured properly. Token, API URL, or Portfolio Board ID is missing from config/services.php or .env file.');
+                // You might want to throw an exception here or ensure the app doesn't try to use a misconfigured service.
+            }
+
+            return new MondayApiService(
+                $token,
+                $apiUrl,
+                $portfolioBoardId // This is where the correct ID needs to be passed
+            );
+        });
     }
 
     /**

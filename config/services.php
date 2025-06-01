@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'monday' => [
+        'token' => env('MONDAY_API_TOKEN'),
+        'url' => env('MONDAY_API_URL', 'https://api.monday.com/v2'),
+        'portfolio_board_id' => env('MONDAY_PORTFOLIO_BOARD_ID', '8914323121'), // Your ID here
+    ],
+
 ];
