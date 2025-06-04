@@ -1,0 +1,32 @@
+query GetProjectBoardTasks(
+    $projectBoardId: [ID!],
+    $showInPortalColumnId: [String!], # For filtering
+    $taskDetailColumnIds: [String!],  # For displaying task details like status
+    $limit: Int,
+    $cursor: String
+  ) {
+  boards(ids: $projectBoardId) {
+    name
+    items_page(limit: $limit, cursor: $cursor) {
+      cursor
+      items {
+        id
+        name
+        # Fetch the "Show In Portal" column for filtering logic in PHP
+        column_values(ids: $showInPortalColumnId) {
+          id
+          text
+          type
+        }
+        # Fetch other specified columns for display
+        # We'll create a separate alias for these to avoid conflict if showInPortalColumnId is also in taskDetailColumnIds
+        details: column_values(ids: $taskDetailColumnIds) {
+          id
+          text
+          value # Include value as it's useful for status (index) and other complex types
+          type
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+query GetMondayUserInfo($userIds: [ID!]) {
+  users (ids: $userIds) {
+    id # Good to fetch the ID to confirm it's the right user
+    photo_small
+    # name # Name removed as per your request
+  }
+}

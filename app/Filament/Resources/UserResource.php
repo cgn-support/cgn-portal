@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 // use App\Filament\Resources\UserResource\RelationManagers; // Uncomment if you have relation managers
 use App\Models\User;
-use App\Models\Client; // For Client selection options
+use App\Models\Client; // For Client selection options, if needed
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get; // For reactive visibility
@@ -46,78 +46,71 @@ class UserResource extends Resource
                             ->dehydrated(fn($state) => filled($state))
                             ->dehydrateStateUsing(fn($state) => Hash::make($state))
                             ->maxLength(255)
-                            ->helperText('Leave blank to keep current password when editing.'),
+                            ->helperText('Leave blank to keep current password when editing. Required on create.'),
                         Forms\Components\DateTimePicker::make('email_verified_at')
                             ->label('Email Verified At')
                             ->nullable(),
                     ]),
-                Forms\Components\Section::make('Roles & Client Assignment')
+                Forms\Components\Section::make('Roles & Assignments')
                     ->schema([
                         Forms\Components\Select::make('roles')
                             ->multiple()
                             ->relationship('roles', 'name')
                             ->searchable()
                             ->preload()
-                            ->live() // <-- Add live() to make it reactive for the client_id field
+                            ->live() // Important for conditional visibility of other fields
                             ->helperText('Assign one or more roles to this user.'),
 
                         Forms\Components\Select::make('client_id')
                             ->label('Assign to Client Company')
-                            ->relationship('client', 'name') // Assumes 'client' relationship on User model and 'name' on Client model
+                            ->relationship('client', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable()
-                            // Conditionally visible if 'client_user' role is selected
                             ->visible(function (Get $get): bool {
-                                $selectedRoleNames = [];
-                                $selectedRoleIds = $get('roles'); // This gives an array of role IDs
-
-                                if (is_array($selectedRoleIds) && !empty($selectedRoleIds)) {
-                                    // Fetch role names for the selected IDs
-                                    $selectedRoleNames = Role::whereIn('id', $selectedRoleIds)->pluck('name')->all();
+                                $selectedRoleIds = $get('roles');
+                                if (!is_array($selectedRoleIds) || empty($selectedRoleIds)) {
+                                    return false;
                                 }
+                                $selectedRoleNames = Role::whereIn('id', $selectedRoleIds)->pluck('name')->all();
                                 return in_array('client_user', $selectedRoleNames);
                             })
                             ->helperText('Only applicable if the user has the "client_user" role.'),
+
+                        Forms\Components\TextInput::make('monday_user_id')
+                            ->label('Monday.com User ID')
+                            ->nullable()
+                            ->numeric()
+                            ->unique(ignoreRecord: true, table: 'users', column: 'monday_user_id')
+                            ->visible(function (Get $get): bool {
+                                $selectedRoleIds = $get('roles');
+                                if (!is_array($selectedRoleIds) || empty($selectedRoleIds)) {
+                                    return false;
+                                }
+                                $selectedRoleNames = Role::whereIn('id', $selectedRoleIds)->pluck('name')->all();
+                                // Show for admin or account_manager
+                                return in_array('admin', $selectedRoleNames) || in_array('account_manager', $selectedRoleNames);
+                            })
+                            ->helperText('Enter the numeric User ID from Monday.com. Required for Account Managers to sync project assignments.'),
                     ])
             ]);
     }
 
+    // ... rest of your UserResource (table, getRelations, getPages, etc.) remains the same as previously updated ...
+    // Make sure the table method also includes a column for 'monday_user_id' if you want to see it there.
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')
-                    ->label('ID')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('email')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('roles.name')
-                    ->badge()
-                    ->label('Roles')
-                    ->searchable(isIndividual: true, isGlobal: false),
-                Tables\Columns\TextColumn::make('client.name') // Display the assigned client company name
-                    ->label('Client Company')
-                    ->searchable()
-                    ->sortable()
-                    ->placeholder('N/A'), // Show N/A if no client is assigned
-                Tables\Columns\IconColumn::make('email_verified_at')
-                    ->label('Verified')
-                    ->boolean()
-                    ->sortable()
-                    ->getStateUsing(fn(User $record): bool => (bool) $record->email_verified_at),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime('M j, Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime('M j, Y H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('id')->label('ID')->sortable(),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('email')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('roles.name')->badge()->label('Roles')->searchable(isIndividual: true, isGlobal: false),
+                Tables\Columns\TextColumn::make('client.name')->label('Client Company')->searchable()->sortable()->placeholder('N/A'),
+                Tables\Columns\TextColumn::make('monday_user_id')->label('Monday ID')->searchable()->sortable()->toggleable(isToggledHiddenByDefault: true), // Added to table
+                Tables\Columns\IconColumn::make('email_verified_at')->label('Verified')->boolean()->sortable()->getStateUsing(fn(User $record): bool => (bool) $record->email_verified_at),
+                Tables\Columns\TextColumn::make('created_at')->dateTime('M j, Y H:i')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('updated_at')->dateTime('M j, Y H:i')->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
@@ -141,7 +134,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // RelationManagers\ClientRelationManager::class, // If you want to manage client from user page (less common)
+            //
         ];
     }
 
@@ -158,7 +151,7 @@ class UserResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with('client') // Eager load client for the table display
+            ->with('client')
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ]);

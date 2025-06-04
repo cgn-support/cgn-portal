@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Resources\ProjectResource;
 use App\Services\MondayApiService;
 use App\Models\Project;
+use App\Models\User; // For finding the Account Manager
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -18,6 +19,9 @@ class EditProject extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\DeleteAction::make(), // Standard Delete Action
+            Actions\ForceDeleteAction::make(), // Standard ForceDelete Action
+            Actions\RestoreAction::make(), // Standard Restore Action
             Actions\Action::make('fetchMondayData')
                 ->label('Fetch Monday Data')
                 ->color('success')
@@ -31,30 +35,29 @@ class EditProject extends EditRecord
                     $portfolioItemId = (string) $record->monday_pulse_id;
                     $updateData = [];
 
+                    // Log::info("Attempting to fetch data for Portfolio Item ID: {$portfolioItemId} from Portfolio Board ID: {$mondayApiService->getPortfolioBoardId()}."); // Assuming a getter for portfolioBoardId or log it within service
+
                     // Define ALL column IDs from your Portfolio Board you want to fetch for general details
                     $generalColumnIdsToFetch = [
                         'portfolio_project_rag',      // Project Health (RAG)
                         'portfolio_project_doc',      // Project Status Summary (Doc)
                         'portfolio_project_scope',    // Project Description
-                        'text_mkpxp60t',              // Domain
+                        'text_mkpxp60t',              // Domain (maps to project_url)
                         'dropdown_mkpxzd6j',          // Current Services
                         'dropdown_mkpxtdjv',          // Completed Services
-                        'multiple_person_mkpxkdc5',     // Specialist
-                        'multiple_person_mkpxnxmt',     // Content Writer
-                        'multiple_person_mkpxg4m4',     // Developer
-                        'multiple_person_mkpxy34t',     // Copywriter
-                        'multiple_person_mkpxjyzm',     // Designer
-                        'text_mkrgjna6',              // Drive Folder ID
+                        'multiple_person_mkpxtspm',   // Account Manager (People column)
+                        'multiple_person_mkpxkdc5',   // Specialist
+                        'multiple_person_mkpxnxmt',   // Content Writer
+                        'multiple_person_mkpxg4m4',   // Developer
+                        'multiple_person_mkpxy34t',   // Copywriter
+                        'multiple_person_mkpxjyzm',   // Designer
+                        'text_mkrgjna6',              // Drive Folder ID (maps to google_drive_folder)
                         'file_mkrgzpv0',              // Client Logo
-                        'text_mkrgday0',              // Slack Channel ID
-                        'text_mkrgfr6x',              // Bright Local ID
-                        'text_mkrgcavn',              // Project Workbook ID (Google Sheet ID)
-                        'text_mkrgzj64',              // WP Umbrella ID
-                        // Add any other column IDs needed, e.g., for Account Manager if not set manually
-                        // 'portfolio_project_owner', // Owner (People)
-                        // 'multiple_person_mkpxtspm',// Account Manager (People)
+                        'text_mkrgday0',              // Slack Channel ID (maps to slack_channel)
+                        'text_mkrgfr6x',              // Bright Local ID (maps to bright_local_url)
+                        'text_mkrgcavn',              // Project Workbook ID (maps to google_sheet_id)
+                        'text_mkrgzj64',              // WP Umbrella ID (maps to wp_umbrella_project_id)
                     ];
-                    // Ensure 'name' is not in this list as it's a root field, not a column_value
                     $generalColumnIdsToFetch = array_filter($generalColumnIdsToFetch, fn($id) => $id !== 'name');
 
 
@@ -65,14 +68,11 @@ class EditProject extends EditRecord
                         if ($itemData) {
                             if (isset($itemData['name'])) {
                                 Log::info("Fetched Monday item name: {$itemData['name']} for Laravel project: {$record->name}. Not automatically updating Laravel project name.");
-                                // $updateData['name'] = $itemData['name']; // Optionally update name
                             }
 
                             $columnValues = $itemData['column_values'] ?? [];
                             Log::info("Fetched general column_values for item {$portfolioItemId}:", $columnValues);
 
-
-                            // Helper function to extract first person ID from People column value
                             $extractFirstPersonId = function ($personColumnDataArray) {
                                 if ($personColumnDataArray && isset($personColumnDataArray['value']) && is_string($personColumnDataArray['value'])) {
                                     $valueArray = json_decode($personColumnDataArray['value'], true);
@@ -83,6 +83,27 @@ class EditProject extends EditRecord
                                 return null;
                             };
 
+                            // --- Account Manager Sync ---
+                            $accountManagerMondayColumnId = 'multiple_person_mkpxtspm';
+                            $amPortfolioData = $mondayApiService->getColumnDataById($columnValues, $accountManagerMondayColumnId);
+                            $mondayAmUserId = $extractFirstPersonId($amPortfolioData);
+
+                            if ($mondayAmUserId) {
+                                $laravelAmUser = User::where('monday_user_id', $mondayAmUserId)
+                                    ->whereHas('roles', fn($q) => $q->where('name', 'account_manager'))
+                                    ->first();
+                                if ($laravelAmUser) {
+                                    $updateData['account_manager_id'] = $laravelAmUser->id;
+                                    Log::info("Synced Account Manager: Found Laravel user ID {$laravelAmUser->id} for Monday User ID {$mondayAmUserId}");
+                                } else {
+                                    Log::warning("Could not find a Laravel user with role 'account_manager' and Monday User ID: {$mondayAmUserId}. Project AM not updated.");
+                                    Notification::make()->title('AM Sync Issue')->warning()->body("Account Manager with Monday ID {$mondayAmUserId} not found in portal or lacks 'account_manager' role. Project AM not updated.")->send();
+                                }
+                            } else {
+                                Log::info("No Account Manager assigned in Monday.com column '{$accountManagerMondayColumnId}' for Pulse ID {$portfolioItemId}.");
+                            }
+
+                            // --- Map other specific columns ---
                             // 1. Domain (text_mkpxp60t) -> project_url
                             $domainColumn = $mondayApiService->getColumnDataById($columnValues, 'text_mkpxp60t');
                             if ($domainColumn && isset($domainColumn['text']) && trim($domainColumn['text']) !== '') {
@@ -158,7 +179,6 @@ class EditProject extends EditRecord
                                 $updateData['wp_umbrella_project_id'] = trim($wpUmbrellaColumn['text']);
                             }
 
-                            // --- Also fetch RAG, Doc, Scope as before ---
                             $ragColumnData = $mondayApiService->getColumnDataById($columnValues, 'portfolio_project_rag');
                             if ($ragColumnData && isset($ragColumnData['text'])) {
                                 $updateData['portfolio_project_rag'] = $ragColumnData['text'];
@@ -183,7 +203,7 @@ class EditProject extends EditRecord
                                 $updateData['portfolio_project_scope'] = $scopeColumnData['text'];
                             }
                         } else {
-                            Notification::make()->title('Monday Data Not Found')->warning()->body("General details not found for Pulse ID: {$portfolioItemId}")->send();
+                            Notification::make()->title('Monday Data Not Found')->warning()->body("General details not found for Pulse ID: {$portfolioItemId}. Verify Pulse ID and Portfolio Board ID configuration.")->send();
                         }
 
                         // --- 2. Fetch the linked Project Board ID specifically ---
@@ -193,7 +213,7 @@ class EditProject extends EditRecord
                         if ($linkedBoardId) {
                             $updateData['monday_board_id'] = $linkedBoardId;
                         } else {
-                            Notification::make()->title('Linked Board ID Missing')->danger()->body("Could not extract the linked Project Board ID from Monday.com for Pulse ID {$portfolioItemId}. Check the '{$mirrorColumnForBoardId}' column setup on Monday.com.")->send();
+                            Notification::make()->title('Linked Board ID Missing')->danger()->body("Could not extract the linked Project Board ID from Monday.com for Pulse ID {$portfolioItemId}. Check the '{$mirrorColumnForBoardId}' column setup on Monday.com, and verify the Portfolio Board ID configuration in your application.")->send();
                             Log::warning("Failed to retrieve linked Monday Board ID for Pulse ID {$portfolioItemId}.");
                         }
 
@@ -216,4 +236,11 @@ class EditProject extends EditRecord
                 ->requiresConfirmation()
         ];
     }
+
+    // You can add other page methods like mutateFormDataBeforeSave, etc., if needed.
+    // protected function mutateFormDataBeforeSave(array $data): array
+    // {
+    //     // Example: if you needed to do something before the main form save
+    //     return $data;
+    // }
 }
