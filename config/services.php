@@ -41,4 +41,11 @@ return [
         'portfolio_board_id' => env('MONDAY_PORTFOLIO_BOARD_ID', '8914323121'), // Your ID here
     ],
 
+    // Add this to your config/services.php
+    'tracking' => [
+        'url' => env('TRACKING_API_URL', 'https://tracking.contractorgrowthnetwork.com'),
+        'timeout' => env('TRACKING_API_TIMEOUT', 30),
+    ],
+
+
 ];

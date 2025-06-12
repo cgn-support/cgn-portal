@@ -37,7 +37,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
+                \App\Filament\Widgets\TrackingOverviewWidget::class,
+                \App\Filament\Widgets\TrackingMetricsWidget::class,
+                \App\Filament\Widgets\TrackingStatusWidget::class,
+                // ... your other widgets
             ])
             ->middleware([
                 EncryptCookies::class,

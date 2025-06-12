@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Log;
 
 class Project extends Model
 {
@@ -118,5 +119,33 @@ class Project extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    // Add this method to your Project model
+    public function getTrackingDomain(): ?string
+    {
+        if (!$this->project_url) {
+            return null;
+        }
+
+        try {
+            $parsed = parse_url($this->project_url);
+            $domain = $parsed['host'] ?? null;
+
+            // Remove www. prefix if present
+            if ($domain && str_starts_with($domain, 'www.')) {
+                $domain = substr($domain, 4);
+            }
+
+            return $domain;
+        } catch (\Exception $e) {
+            Log::warning('Failed to parse project URL', [
+                'project_id' => $this->id,
+                'project_url' => $this->project_url,
+                'error' => $e->getMessage()
+            ]);
+
+            return null;
+        }
     }
 }

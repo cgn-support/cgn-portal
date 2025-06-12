@@ -12,6 +12,15 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
+Route::middleware(['auth', 'role:admin|account_manager'])->prefix('admin/tracking')->group(function () {
+    Route::post('/refresh-cache', [\App\Http\Controllers\Admin\TrackingController::class, 'refreshCache'])
+        ->name('admin.tracking.refresh-cache');
+    Route::post('/clear-cache', [\App\Http\Controllers\Admin\TrackingController::class, 'clearCache'])
+        ->name('admin.tracking.clear-cache');
+    Route::get('/health', [\App\Http\Controllers\Admin\TrackingController::class, 'healthCheck'])
+        ->name('admin.tracking.health');
+});
+
 Route::middleware(['auth'])->group(function () {
     Route::redirect('settings', 'settings/profile');
 
@@ -94,5 +103,6 @@ Route::middleware(['auth'])->group(function () {
         return view('gantt', compact('project'));
     })->name('project.gantt');
 });
+
 
 require __DIR__ . '/auth.php';

@@ -90,6 +90,14 @@ return [
             'driver' => 'octane',
         ],
 
+        // Add this to your config/cache.php
+        'tracking' => [
+            'aggregate_metrics_ttl' => env('TRACKING_CACHE_AGGREGATE_TTL', 30 * 60), // 30 minutes
+            'session_journey_ttl' => env('TRACKING_CACHE_SESSION_TTL', 2 * 60 * 60), // 2 hours
+            'api_health_ttl' => env('TRACKING_CACHE_HEALTH_TTL', 5 * 60), // 5 minutes
+        ],
+
+
     ],
 
     /*
@@ -103,6 +111,6 @@ return [
     |
     */
 
-    'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_').'_cache_'),
+    'prefix' => env('CACHE_PREFIX', Str::slug(env('APP_NAME', 'laravel'), '_') . '_cache_'),
 
 ];
