@@ -4,24 +4,30 @@ namespace App\Filament\Widgets;
 
 use App\Models\Project;
 use App\Services\Tracking\TrackingAnalyticsService;
-use Filament\Forms\Components\Select;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Facades\Cache;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 
 class TrackingMetricsWidget extends ChartWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?string $heading = 'Tracking Metrics by Project';
     protected static ?string $pollingInterval = null;
+    protected int | string | array $columnSpan = 'full';
 
     public ?string $filter = 'last_30_days';
-    public ?string $projectFilter = null;
+
+    protected static ?int $sort = 2;
 
     protected function getData(): array
     {
         $analyticsService = app(TrackingAnalyticsService::class);
 
-        if ($this->projectFilter) {
-            $project = Project::find($this->projectFilter);
+        // Get filters from dashboard
+        $projectId = $this->filters['project'] ?? null;
+
+        if ($projectId) {
+            $project = Project::find($projectId);
             if ($project) {
                 return $this->getProjectChartData($project, $analyticsService);
             }
@@ -32,7 +38,17 @@ class TrackingMetricsWidget extends ChartWidget
 
     private function getProjectChartData(Project $project, TrackingAnalyticsService $analyticsService): array
     {
-        $trendingData = $analyticsService->getProjectTrending($project, 30);
+        // Get dashboard filters
+        $dateRange = $this->filters['dateRange'] ?? 'last_30_days';
+        $startDate = $this->filters['startDate'] ?? null;
+        $endDate = $this->filters['endDate'] ?? null;
+
+        // Use custom dates if dateRange is 'custom'
+        if ($dateRange === 'custom' && $startDate && $endDate) {
+            $trendingData = $analyticsService->getProjectTrending($project, 'custom', $startDate, $endDate);
+        } else {
+            $trendingData = $analyticsService->getProjectTrending($project, $dateRange);
+        }
 
         return [
             'datasets' => [
@@ -61,7 +77,11 @@ class TrackingMetricsWidget extends ChartWidget
 
     private function getAllProjectsChartData(TrackingAnalyticsService $analyticsService): array
     {
-        $projects = Project::whereNotNull('project_url')->limit(10)->get();
+        $projects = Project::whereNotNull('project_url')
+            ->with('business')
+            ->limit(10)
+            ->get();
+
         $projectNames = [];
         $visitorsData = [];
         $callsData = [];
@@ -99,35 +119,60 @@ class TrackingMetricsWidget extends ChartWidget
 
     protected function getType(): string
     {
-        return 'line';
+        // Use dashboard filter instead of $projectFilter
+        $projectId = $this->filters['project'] ?? null;
+        return $projectId ? 'line' : 'bar';
     }
 
-    protected function getFilters(): ?array
-    {
-        return [
-            'today' => 'Today',
-            'yesterday' => 'Yesterday',
-            'last_7_days' => 'Last 7 days',
-            'last_30_days' => 'Last 30 days',
-            'this_month' => 'This month',
-        ];
-    }
+    // protected function getFilters(): ?array
+    // {
+    //     return [
+    //         'today' => 'Today',
+    //         'yesterday' => 'Yesterday',
+    //         'last_7_days' => 'Last 7 days',
+    //         'last_30_days' => 'Last 30 days',
+    //         'this_month' => 'This month',
+    //     ];
+    // }
 
-    protected function getFormSchema(): array
+    public function getHeading(): string
     {
-        return [
-            Select::make('projectFilter')
-                ->label('Project')
-                ->placeholder('All Projects')
-                ->options(function () {
-                    return Project::whereNotNull('project_url')
-                        ->with('business')
-                        ->get()
-                        ->pluck('business.name', 'id')
-                        ->toArray();
-                })
-                ->live(),
-        ];
+        $projectId = $this->filters['project'] ?? null;
+        $dateRange = $this->filters['dateRange'] ?? null;
+        $startDate = $this->filters['startDate'] ?? null;
+        $endDate = $this->filters['endDate'] ?? null;
+
+        $heading = 'Tracking Metrics';
+
+        // Add project name
+        if ($projectId) {
+            $project = Project::find($projectId);
+            $projectName = $project?->business->name ?? 'Selected Project';
+            $heading .= " - {$projectName}";
+        } else {
+            $heading .= " - All Projects";
+        }
+
+        // Add date range
+        if ($dateRange && $dateRange !== 'custom') {
+            $dateRangeLabels = [
+                'last_7_days' => 'Last 7 Days',
+                'last_30_days' => 'Last 30 Days',
+                'last_90_days' => 'Last 90 Days',
+                'this_month' => 'This Month',
+                'last_month' => 'Last Month',
+                'this_year' => 'This Year',
+            ];
+            $heading .= " ({$dateRangeLabels[$dateRange]})";
+        } elseif ($startDate && $endDate) {
+            $start = \Carbon\Carbon::parse($startDate)->format('M j');
+            $end = \Carbon\Carbon::parse($endDate)->format('M j, Y');
+            $heading .= " ({$start} - {$end})";
+        } else {
+            $heading .= " (Last 30 Days)";
+        }
+
+        return $heading;
     }
 
     public static function canView(): bool

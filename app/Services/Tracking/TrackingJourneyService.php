@@ -191,6 +191,25 @@ class TrackingJourneyService
             'utm_content' => $firstEvent['utm_content'] ?? null,
         ];
 
+        // Add these fields at the end, before returning $journey
+        $journey['conversion_page'] = null;
+        $journey['last_page_before_conversion'] = null;
+
+        // Find conversion details (existing code)
+        $conversion = $formSubmissions->first();
+        if ($conversion) {
+            $journey['conversion_page'] = $conversion['current_url'] ?? null;
+
+            // Find last page before conversion
+            $conversionTime = Carbon::parse($conversion['event_timestamp']);
+            $lastPageBeforeConversion = $pageViews
+                ->where('event_timestamp', '<', $conversionTime->toISOString())
+                ->sortByDesc('event_timestamp')
+                ->first();
+
+            $journey['last_page_before_conversion'] = $lastPageBeforeConversion['current_url'] ?? null;
+        }
+
         return $journey;
     }
 

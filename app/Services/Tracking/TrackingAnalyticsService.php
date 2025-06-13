@@ -5,7 +5,8 @@ namespace App\Services\Tracking;
 use App\Models\Project;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
+use App\Services\Tracking\TrackingService;
+
 
 class TrackingAnalyticsService
 {
@@ -93,7 +94,7 @@ class TrackingAnalyticsService
     /**
      * Get trending data for a project
      */
-    public function getProjectTrending(Project $project, int $days = 30): array
+    public function getProjectTrending(Project $project, string $dateRange = 'last_30_days', ?string $startDate = null, ?string $endDate = null): array
     {
         $domain = $project->getTrackingDomain();
 
@@ -101,26 +102,27 @@ class TrackingAnalyticsService
             return [];
         }
 
+        // Determine the date range and granularity
+        $dateConfig = $this->getDateRangeConfig($dateRange, $startDate, $endDate);
         $trendingData = [];
 
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
-            $dateRange = 'day_' . $date->toDateString();
+        foreach ($dateConfig['dates'] as $dateInfo) {
+            $cacheKey = $dateConfig['granularity'] . '_' . $dateInfo['key'];
 
             $metrics = $this->cacheService->getOrSetAggregateMetrics(
                 $domain,
-                $dateRange,
-                function () use ($domain, $date) {
+                $cacheKey,
+                function () use ($domain, $dateInfo) {
                     return $this->trackingService->getAggregateMetrics(
                         $domain,
-                        $date->startOfDay(),
-                        $date->endOfDay()
+                        $dateInfo['start'],
+                        $dateInfo['end']
                     );
                 }
             );
 
             $trendingData[] = [
-                'date' => $date->toDateString(),
+                'date' => $dateInfo['label'],
                 'visitors' => $metrics['unique_visitors'] ?? 0,
                 'calls' => $metrics['phone_calls'] ?? 0,
                 'submissions' => $metrics['form_submissions'] ?? 0,
@@ -168,7 +170,7 @@ class TrackingAnalyticsService
         );
 
         // Also update the last health check timestamp
-        Cache::put('tracking:last_health_check', now(), $this->cacheService->getApiHealthTtl());
+        \Illuminate\Support\Facades\Cache::put('tracking:last_health_check', now(), $this->cacheService->getApiHealthTtl());
 
         return $isHealthy;
     }
@@ -188,6 +190,183 @@ class TrackingAnalyticsService
         $cacheStatus['api_healthy'] = $this->isApiHealthy();
 
         return $cacheStatus;
+    }
+
+    /**
+     * Configure date ranges and granularity for trending data
+     */
+    private function getDateRangeConfig(string $dateRange, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $now = Carbon::now();
+
+        return match ($dateRange) {
+            'last_7_days' => [
+                'granularity' => 'daily',
+                'dates' => collect(range(6, 0))->map(function ($daysAgo) use ($now) {
+                    $date = $now->copy()->subDays($daysAgo);
+                    return [
+                        'key' => $date->toDateString(),
+                        'label' => $date->format('M j'),
+                        'start' => $date->startOfDay(),
+                        'end' => $date->endOfDay(),
+                    ];
+                })->toArray(),
+            ],
+
+            'last_30_days' => [
+                'granularity' => 'daily',
+                'dates' => collect(range(29, 0))->map(function ($daysAgo) use ($now) {
+                    $date = $now->copy()->subDays($daysAgo);
+                    return [
+                        'key' => $date->toDateString(),
+                        'label' => $date->format('M j'),
+                        'start' => $date->startOfDay(),
+                        'end' => $date->endOfDay(),
+                    ];
+                })->toArray(),
+            ],
+
+            'last_90_days' => [
+                'granularity' => 'weekly',
+                'dates' => collect(range(12, 0))->map(function ($weeksAgo) use ($now) {
+                    $startOfWeek = $now->copy()->subWeeks($weeksAgo)->startOfWeek();
+                    $endOfWeek = $startOfWeek->copy()->endOfWeek();
+                    return [
+                        'key' => $startOfWeek->format('Y-W'),
+                        'label' => $startOfWeek->format('M j'),
+                        'start' => $startOfWeek,
+                        'end' => $endOfWeek,
+                    ];
+                })->toArray(),
+            ],
+
+            'this_month' => [
+                'granularity' => 'daily',
+                'dates' => collect(range($now->day - 1, 0))->map(function ($daysAgo) use ($now) {
+                    $date = $now->copy()->subDays($daysAgo);
+                    return [
+                        'key' => $date->toDateString(),
+                        'label' => $date->format('M j'),
+                        'start' => $date->startOfDay(),
+                        'end' => $date->endOfDay(),
+                    ];
+                })->toArray(),
+            ],
+
+            'last_month' => [
+                'granularity' => 'daily',
+                'dates' => collect(range($now->copy()->subMonth()->daysInMonth - 1, 0))->map(function ($daysAgo) use ($now) {
+                    $date = $now->copy()->subMonth()->startOfMonth()->addDays($daysAgo);
+                    return [
+                        'key' => $date->toDateString(),
+                        'label' => $date->format('M j'),
+                        'start' => $date->startOfDay(),
+                        'end' => $date->endOfDay(),
+                    ];
+                })->toArray(),
+            ],
+
+            'this_year' => [
+                'granularity' => 'monthly',
+                'dates' => collect(range($now->month - 1, 0))->map(function ($monthsAgo) use ($now) {
+                    $month = $now->copy()->subMonths($monthsAgo);
+                    return [
+                        'key' => $month->format('Y-m'),
+                        'label' => $month->format('M'),
+                        'start' => $month->startOfMonth(),
+                        'end' => $month->endOfMonth(),
+                    ];
+                })->toArray(),
+            ],
+
+            'custom' => $this->getCustomDateRange($startDate, $endDate),
+
+            default => $this->getDateRangeConfig('last_30_days'),
+        };
+    }
+
+    /**
+     * Handle custom date ranges
+     */
+    private function getCustomDateRange(?string $startDate, ?string $endDate): array
+    {
+        if (!$startDate || !$endDate) {
+            return $this->getDateRangeConfig('last_30_days');
+        }
+
+        $start = Carbon::parse($startDate);
+        $end = Carbon::parse($endDate);
+        $daysDiff = $start->diffInDays($end);
+
+        // Determine granularity based on date range length
+        if ($daysDiff <= 31) {
+            // Daily granularity for ranges up to 31 days
+            $dates = [];
+            $current = $start->copy();
+
+            while ($current->lte($end)) {
+                $dates[] = [
+                    'key' => $current->toDateString(),
+                    'label' => $current->format('M j'),
+                    'start' => $current->startOfDay(),
+                    'end' => $current->endOfDay(),
+                ];
+                $current->addDay();
+            }
+
+            return [
+                'granularity' => 'daily',
+                'dates' => $dates,
+            ];
+        } elseif ($daysDiff <= 90) {
+            // Weekly granularity for ranges up to 90 days
+            $dates = [];
+            $current = $start->copy()->startOfWeek();
+
+            while ($current->lt($end)) {
+                $weekEnd = $current->copy()->endOfWeek();
+                if ($weekEnd->gt($end)) {
+                    $weekEnd = $end->copy();
+                }
+
+                $dates[] = [
+                    'key' => $current->format('Y-W'),
+                    'label' => $current->format('M j'),
+                    'start' => $current,
+                    'end' => $weekEnd,
+                ];
+                $current->addWeek();
+            }
+
+            return [
+                'granularity' => 'weekly',
+                'dates' => $dates,
+            ];
+        } else {
+            // Monthly granularity for longer ranges
+            $dates = [];
+            $current = $start->copy()->startOfMonth();
+
+            while ($current->lt($end)) {
+                $monthEnd = $current->copy()->endOfMonth();
+                if ($monthEnd->gt($end)) {
+                    $monthEnd = $end->copy();
+                }
+
+                $dates[] = [
+                    'key' => $current->format('Y-m'),
+                    'label' => $current->format('M Y'),
+                    'start' => $current,
+                    'end' => $monthEnd,
+                ];
+                $current->addMonth();
+            }
+
+            return [
+                'granularity' => 'monthly',
+                'dates' => $dates,
+            ];
+        }
     }
 
     /**

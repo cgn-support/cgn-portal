@@ -2,83 +2,208 @@
 
 namespace App\Livewire;
 
+use App\Models\Project;
+use App\Services\Tracking\TrackingAnalyticsService;
 use Livewire\Component;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log; // For logging
-use Illuminate\Database\Eloquent\Collection; // Import Collection
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class DashboardStats extends Component
 {
-    public Collection $projects; // Typehint if you are sure it's always a collection
-    public string $selectedProjectId = 'all'; // Default to 'all', use string for value consistency
+    public $projects;
+    public $selectedProjectId = 'all';
+    public $selectedDateRange = 'last_30_days';
 
-    // Stats properties
-    public $formCount = 0;
-    public $callCount = 0;
+    // Metrics
     public $visitorCount = 0;
+    public $callCount = 0;
+    public $formCount = 0;
+    public $conversionRate = 0;
+    public $totalLeadsValue = 0;
 
-    public function mount(Collection $projects) // Typehint $projects
+    // Chart data
+    public $chartData = [];
+    public $chartLabels = [];
+
+    public $isLoading = false;
+
+    public function mount($projects)
     {
         $this->projects = $projects;
-        // Initial load can be based on 'all' or the first project if available
-        $this->loadStatsForProject($this->selectedProjectId);
+        $this->loadStats();
     }
 
-    /**
-     * This is a Livewire lifecycle hook that runs when a public property is updated.
-     * When $selectedProjectId changes, this method will be called.
-     */
-    public function updatedSelectedProjectId(string $value): void
+    public function updated($propertyName)
     {
-        // $value is the new selected project ID
-        $this->selectedProjectId = $value; // Ensure it's updated if not using .live
-        $this->loadStatsForProject($this->selectedProjectId);
-    }
-
-    public function loadStatsForProject(string $projectId): void
-    {
-        Log::info("Loading stats for Project ID: " . $projectId);
-
-        // TODO: Implement your actual data fetching logic based on $projectId
-        // If $projectId is 'all', fetch aggregated stats.
-        // If $projectId is a specific ID, filter your stats for that project.
-
-        // Example placeholder logic:
-        if ($projectId === 'all') {
-            $this->formCount = Cache::remember('dashboard.formCount.all', 60, function () {
-                // Replace with actual logic for all projects
-                return 120; // Example aggregate
-            });
-            $this->callCount = Cache::remember('dashboard.callCount.all', 60, function () {
-                return 70; // Example aggregate
-            });
-            $this->visitorCount = Cache::remember('dashboard.visitorCount.all', 60, function () {
-                return 1450; // Example aggregate
-            });
-        } else {
-            // Specific project selected - use $projectId to fetch data
-            $this->formCount = Cache::remember("dashboard.formCount.project.{$projectId}", 60, function () use ($projectId) {
-                // Replace with actual logic for specific project (e.g., Lead::where('project_id', $projectId)->count())
-                return rand(5, 20); // Example for specific project
-            });
-            $this->callCount = Cache::remember("dashboard.callCount.project.{$projectId}", 60, function () use ($projectId) {
-                return rand(1, 10); // Example for specific project
-            });
-            $this->visitorCount = Cache::remember("dashboard.visitorCount.project.{$projectId}", 60, function () use ($projectId) {
-                return rand(50, 200); // Example for specific project
-            });
+        if (in_array($propertyName, ['selectedProjectId', 'selectedDateRange'])) {
+            $this->loadStats();
         }
     }
 
-    // This method is called by wire:init and wire:poll if you keep them,
-    // but the primary stats loading should now happen via updatedSelectedProjectId
-    // or mount. You might rename it or adjust its role.
-    // For simplicity, I've integrated its logic into loadStatsForProject.
-    // public function loadStats()
-    // {
-    //    $this->loadStatsForProject($this->selectedProjectId);
-    // }
+    public function loadStats()
+    {
+        $this->isLoading = true;
 
+        try {
+            $analyticsService = app(TrackingAnalyticsService::class);
+
+            if ($this->selectedProjectId === 'all') {
+                $this->loadAllProjectsStats($analyticsService);
+            } else {
+                $this->loadSingleProjectStats($analyticsService);
+            }
+
+            $this->loadChartData($analyticsService);
+        } catch (\Exception $e) {
+            Log::error('Error loading dashboard stats: ' . $e->getMessage());
+            $this->resetStats();
+        }
+
+        $this->isLoading = false;
+    }
+
+    private function loadAllProjectsStats($analyticsService)
+    {
+        $totalMetrics = [
+            'unique_visitors' => 0,
+            'phone_calls' => 0,
+            'form_submissions' => 0,
+        ];
+
+        $totalLeadsValue = 0;
+
+        foreach ($this->projects as $project) {
+            $metrics = $analyticsService->getProjectMetrics($project, $this->selectedDateRange);
+
+            $totalMetrics['unique_visitors'] += $metrics['unique_visitors'] ?? 0;
+            $totalMetrics['phone_calls'] += $metrics['phone_calls'] ?? 0;
+            $totalMetrics['form_submissions'] += $metrics['form_submissions'] ?? 0;
+
+            // Get leads value for this project
+            $leadsValue = $project->leads()
+                ->where('status', 'closed')
+                ->whereNotNull('value')
+                ->when($this->selectedDateRange !== 'all_time', function ($query) {
+                    $dates = $this->getDateRange();
+                    return $query->whereBetween('submitted_at', [$dates['start'], $dates['end']]);
+                })
+                ->sum('value');
+
+            $totalLeadsValue += $leadsValue;
+        }
+
+        $this->visitorCount = $totalMetrics['unique_visitors'];
+        $this->callCount = $totalMetrics['phone_calls'];
+        $this->formCount = $totalMetrics['form_submissions'];
+        $this->totalLeadsValue = $totalLeadsValue;
+
+        $totalLeads = $this->callCount + $this->formCount;
+        $this->conversionRate = $this->visitorCount > 0 ? round(($totalLeads / $this->visitorCount) * 100, 1) : 0;
+    }
+
+    private function loadSingleProjectStats($analyticsService)
+    {
+        $project = $this->projects->find($this->selectedProjectId);
+
+        if (!$project) {
+            $this->resetStats();
+            return;
+        }
+
+        $metrics = $analyticsService->getProjectMetrics($project, $this->selectedDateRange);
+
+        $this->visitorCount = $metrics['unique_visitors'] ?? 0;
+        $this->callCount = $metrics['phone_calls'] ?? 0;
+        $this->formCount = $metrics['form_submissions'] ?? 0;
+
+        // Get leads value for this project
+        $this->totalLeadsValue = $project->leads()
+            ->where('status', 'closed')
+            ->whereNotNull('value')
+            ->when($this->selectedDateRange !== 'all_time', function ($query) {
+                $dates = $this->getDateRange();
+                return $query->whereBetween('submitted_at', [$dates['start'], $dates['end']]);
+            })
+            ->sum('value');
+
+        $totalLeads = $this->callCount + $this->formCount;
+        $this->conversionRate = $this->visitorCount > 0 ? round(($totalLeads / $this->visitorCount) * 100, 1) : 0;
+    }
+
+    private function loadChartData($analyticsService)
+    {
+        // Simple 7-day trending for the chart
+        $chartData = ['visitors' => [], 'leads' => []];
+        $labels = [];
+
+        for ($i = 6; $i >= 0; $i--) {
+            $date = Carbon::now()->subDays($i);
+            $labels[] = $date->format('M j');
+
+            if ($this->selectedProjectId === 'all') {
+                $dayVisitors = 0;
+                $dayLeads = 0;
+
+                foreach ($this->projects as $project) {
+                    $dayMetrics = $analyticsService->getProjectMetrics($project, 'day_' . $date->toDateString());
+                    $dayVisitors += $dayMetrics['unique_visitors'] ?? 0;
+                    $dayLeads += ($dayMetrics['phone_calls'] ?? 0) + ($dayMetrics['form_submissions'] ?? 0);
+                }
+
+                $chartData['visitors'][] = $dayVisitors;
+                $chartData['leads'][] = $dayLeads;
+            } else {
+                $project = $this->projects->find($this->selectedProjectId);
+                if ($project) {
+                    $dayMetrics = $analyticsService->getProjectMetrics($project, 'day_' . $date->toDateString());
+                    $chartData['visitors'][] = $dayMetrics['unique_visitors'] ?? 0;
+                    $chartData['leads'][] = ($dayMetrics['phone_calls'] ?? 0) + ($dayMetrics['form_submissions'] ?? 0);
+                }
+            }
+        }
+
+        $this->chartData = $chartData;
+        $this->chartLabels = $labels;
+    }
+
+    private function getDateRange()
+    {
+        $now = Carbon::now();
+
+        return match ($this->selectedDateRange) {
+            'today' => [
+                'start' => $now->copy()->startOfDay(),
+                'end' => $now->copy()->endOfDay(),
+            ],
+            'last_7_days' => [
+                'start' => $now->copy()->subDays(7)->startOfDay(),
+                'end' => $now->copy()->endOfDay(),
+            ],
+            'last_30_days' => [
+                'start' => $now->copy()->subDays(30)->startOfDay(),
+                'end' => $now->copy()->endOfDay(),
+            ],
+            'this_month' => [
+                'start' => $now->copy()->startOfMonth(),
+                'end' => $now->copy()->endOfDay(),
+            ],
+            default => [
+                'start' => $now->copy()->subDays(30)->startOfDay(),
+                'end' => $now->copy()->endOfDay(),
+            ],
+        };
+    }
+
+    private function resetStats()
+    {
+        $this->visitorCount = 0;
+        $this->callCount = 0;
+        $this->formCount = 0;
+        $this->conversionRate = 0;
+        $this->totalLeadsValue = 0;
+        $this->chartData = [];
+        $this->chartLabels = [];
+    }
 
     public function render()
     {

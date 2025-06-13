@@ -30,7 +30,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Ensure user is authenticated and the method exists before calling
         if ($user && method_exists($user, 'companyProjects')) {
-            $projects = $user->companyProjects()->get(); // <-- Execute the query here
+            $projects = $user->companyProjects(); // <-- Execute the query here
         } else {
             $projects = collect(); // Pass an empty collection if no user or method
             // Or handle error/redirect as appropriate

@@ -12,6 +12,9 @@ class TrackingStatusWidget extends Widget
     protected static string $view = 'filament.widgets.tracking-status';
     protected static ?string $pollingInterval = '30s';
 
+    protected static ?int $sort = 3;
+
+
     protected function getViewData(): array
     {
         $analyticsService = app(TrackingAnalyticsService::class);
