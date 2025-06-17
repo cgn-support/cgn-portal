@@ -15,6 +15,7 @@ class Report extends Model
         'account_manager_id',
         'title',
         'report_date',
+        'report_month',
         'content',
         'metrics_data',
         'file_path',
@@ -35,5 +36,15 @@ class Report extends Model
     public function accountManager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'account_manager_id');
+    }
+    
+    public function getReportMonthNameAttribute(): string
+    {
+        return date('F', mktime(0, 0, 0, $this->report_month, 1));
+    }
+    
+    public function getReportYearAttribute(): int
+    {
+        return $this->report_date->year;
     }
 }

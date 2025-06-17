@@ -9,7 +9,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -22,6 +22,13 @@
     --color-zinc-800: #262626;
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
+
+    --color-orange-400: #ec824d;
+    --color-orange-500: #ec824d;
+    --color-orange-600: #d5733d;
+
+    --color-teal-800: #003E4A;
+    --color-teal-900: #112629;
 
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
@@ -52,7 +59,7 @@
 }
 
 [data-flux-label] {
-    @apply  !mb-0 !leading-tight;
+    @apply !mb-0 !leading-tight;
 }
 
 input:focus[data-flux-control],
@@ -64,3 +71,37 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* Agency Custom Styles */
+.gradient-heading {
+    @apply text-3xl font-bold bg-[linear-gradient(130deg, #003E4A_0.69%, #112629_50.19%, #FC7B3E_79.69%)] bg-clip-text text-transparent;
+}
+
+.agency-button {
+    @apply bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-200;
+}
+
+.agency-button-secondary {
+    @apply bg-white hover:bg-gray-50 text-orange-500 border border-orange-500 font-medium px-6 py-3 rounded-full shadow-md hover:shadow-lg transition-all duration-200;
+}
+
+.agency-card {
+    @apply bg-white dark:bg-zinc-800 rounded-xl border border-zinc-200 dark:border-zinc-700 shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.agency-card-dark {
+    @apply bg-teal-800 text-white rounded-xl border border-teal-700 shadow-sm hover:shadow-md transition-shadow duration-200;
+}
+
+.agency-section-dark {
+    @apply bg-teal-800 text-white;
+}
+
+.agency-text-highlight {
+    @apply text-orange-500 font-semibold;
+}
+
+.prose ul {
+    list-style-type: disc;
+    margin-left: 20px;
+}

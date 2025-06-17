@@ -81,10 +81,10 @@
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Project
                             </th>
-                            <th
+                            {{-- <th
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Health
-                            </th>
+                            </th> --}}
                             <th
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Visitors (30d)
@@ -137,7 +137,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-center">
+                                {{-- <td class="px-6 py-4 text-center">
                                     <div class="flex items-center justify-center">
                                         <div
                                             class="text-sm font-medium {{ $this->getHealthScoreColor($metrics['health_score']) }}">
@@ -147,7 +147,7 @@
                                     <div class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ $this->getHealthScoreLabel($metrics['health_score']) }}
                                     </div>
-                                </td>
+                                </td> --}}
                                 <td class="px-6 py-4 text-center text-sm text-gray-900 dark:text-gray-100">
                                     {{ number_format($metrics['visitors']) }}
                                 </td>
@@ -169,7 +169,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
                                     <a href="{{ '/project/' . $project->id }}"
-                                        class="inline-flex items-center px-3 py-1.5 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-md transition-colors">
+                                        class="inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-primary-500 text-white text-sm font-medium rounded-md transition-colors">
                                         Manage
                                     </a>
                                 </td>
@@ -270,7 +270,7 @@
 
                     <!-- Action Button -->
                     <a href="{{ '/project/' . $project->id }}"
-                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium rounded-md transition-colors">
+                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-orange-600 hover:bg-primary-500 text-white text-sm font-medium rounded-md transition-colors">
                         Manage Project
                     </a>
                 </div>

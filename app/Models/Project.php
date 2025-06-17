@@ -19,7 +19,6 @@ class Project extends Model
         'account_manager_id',
         'business_id',
         'plan_id',
-        'name',
         'monday_pulse_id',
         'monday_board_id',
         'portfolio_project_rag',

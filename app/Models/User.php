@@ -70,6 +70,8 @@ class User extends Authenticatable
 
     public function companyProjects()
     {
-        return $this->client->projects;
+
+            return $this->client->projects;
+
     }
 }

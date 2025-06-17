@@ -1,8 +1,7 @@
 <x-layouts.app :title="__('Dashboard')">
     <div class="overflow-hidden">
         <div class="flex justify-between items-center p-4">
-            <h1
-                class="text-3xl font-bold bg-[linear-gradient(130deg,#003E4A_0.69%,#112629_50.19%,#FC7B3E_79.69%)] bg-clip-text text-transparent">
+            <h1 class="gradient-heading">
                 Welcome Back, {{ ucfirst($user->name) }}</h1>
 
         </div>

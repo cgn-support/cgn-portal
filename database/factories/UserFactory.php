@@ -29,6 +29,12 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'client_id' => null, // Can be set explicitly or via withClient() state
+            'phone' => fake()->optional()->phoneNumber(),
+            'title' => fake()->optional()->jobTitle(),
+            'is_active' => true,
+            'monday_user_id' => fake()->optional()->randomNumber(6),
+            'monday_photo_url' => fake()->optional()->imageUrl(),
         ];
     }
 
@@ -39,6 +45,26 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Associate the user with a client.
+     */
+    public function withClient($client = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'client_id' => $client instanceof \App\Models\Client ? $client->id : ($client ?: \App\Models\Client::factory()),
+        ]);
+    }
+
+    /**
+     * Create an admin user.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'client_id' => null,
         ]);
     }
 }

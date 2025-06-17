@@ -89,8 +89,17 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('project/{uuid}/reports/{report_id}', function ($uuid, $report_id) {
         $project = Project::where('id', $uuid)->firstOrFail();
-        $report = Report::where('id', $report_id)->firstOrFail();
-        return view('report', ['report' => $report, 'project' => $project]);
+        $report = Report::where('id', $report_id)
+            ->where('project_id', $uuid)
+            ->firstOrFail();
+        
+        // Ensure user has access to this project
+        if (!auth()->user()->hasRole(['admin', 'account_manager']) && 
+            !auth()->user()->companyProjects()->contains($project)) {
+            abort(403);
+        }
+        
+        return view('report-view', compact('report', 'project'));
     })->name('project.report');
 
     Route::get('project/{uuid}/reports/{report_id}/download', function ($uuid, $report_id) {
