@@ -280,10 +280,14 @@
                     </ul>
                 </div>
 
-                <!-- Project Gantt Chart Button -->
-                <div class="mt-14">
+                <!-- Action Buttons -->
+                <div class="mt-14 space-y-3">
+                    <a href="{{ route('project.reports', ['uuid' => $project->id]) }}"
+                        class="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        View Reports
+                    </a>
                     <a href="{{ route('project.map', ['uuid' => $project->id ?? 'default-uuid']) }}"
-                        class="inline-flex items-center justify-center rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                        class="inline-flex w-full items-center justify-center rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                         Project Gantt Chart
                     </a>
                 </div>

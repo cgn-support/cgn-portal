@@ -56,7 +56,7 @@
             <img class="rounded-lg ring-1 shadow-2xl ring-gray-900/10"
                 src="{{ asset($report->data_studio_screenshot) }}" alt="">
             <div class="relative" aria-hidden="true">
-                <div class="absolute -inset-x-20 bottom-0 bg-linear-to-t from-white pt-[7%]"></div>
+                <div class="absolute -inset-x-20 bottom-0 bg-gradient-to-t from-white pt-[7%]"></div>
             </div>
         </div>
     </div>

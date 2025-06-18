@@ -19,6 +19,7 @@ class Report extends Model
         'content',
         'metrics_data',
         'file_path',
+        'looker_studio_share_link',
         'status',
         'notes',
     ];

@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import '../../vendor/livewire/flux/dist/flux.css';
 
+@plugin "@tailwindcss/typography";
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
@@ -74,7 +76,8 @@ select:focus[data-flux-control] {
 
 /* Agency Custom Styles */
 .gradient-heading {
-    @apply text-3xl font-bold bg-[linear-gradient(130deg, #003E4A_0.69%, #112629_50.19%, #FC7B3E_79.69%)] bg-clip-text text-transparent;
+    @apply text-3xl font-bold bg-clip-text text-transparent;
+    background-image: linear-gradient(130deg, #003E4A 0.69%, #112629 50.19%, #FC7B3E 79.69%);
 }
 
 .agency-button {

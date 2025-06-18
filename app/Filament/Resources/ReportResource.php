@@ -14,6 +14,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use App\Events\ReportPublished;
+use Filament\Notifications\Notification;
 
 class ReportResource extends Resource
 {
@@ -116,7 +118,55 @@ class ReportResource extends Resource
                             ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
                             ->maxSize(5120) // 5MB
                             ->columnSpanFull(),
+                        Forms\Components\TextInput::make('looker_studio_share_link')
+                            ->label('Looker Studio Share Link')
+                            ->helperText('Share link to the full Looker Studio report dashboard')
+                            ->url()
+                            ->placeholder('https://lookerstudio.google.com/...')
+                            ->columnSpanFull(),
                     ]),
+
+                Forms\Components\Section::make('Manual Metrics')
+                    ->description('Enter metrics that cannot be automatically tracked. Automated metrics (organic sessions, form submissions, web phone calls, contact button users) will be pulled from your tracking system.')
+                    ->schema([
+                        Forms\Components\TextInput::make('metrics_data.gbp_phone_calls')
+                            ->label('GBP Phone Calls')
+                            ->helperText('Phone calls from Google Business Profile')
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('metrics_data.gbp_listing_clicks')
+                            ->label('GBP Listing Clicks')
+                            ->helperText('Website clicks from Google Business Profile')
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('metrics_data.gbp_booking_clicks')
+                            ->label('GBP Booking Clicks')
+                            ->helperText('Booking button clicks from Google Business Profile')
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('metrics_data.total_citations')
+                            ->label('Total Citations')
+                            ->helperText('Current total number of business citations')
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->columnSpan(1),
+                        Forms\Components\TextInput::make('metrics_data.total_reviews')
+                            ->label('Total Reviews')
+                            ->helperText('Current total number of online reviews')
+                            ->numeric()
+                            ->default(0)
+                            ->minValue(0)
+                            ->columnSpan(2),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
                     
                 Forms\Components\Section::make('Internal Notes')
                     ->schema([
@@ -185,6 +235,28 @@ class ReportResource extends Resource
                         'report_id' => $record->id
                     ]))
                     ->openUrlInNewTab(),
+                Tables\Actions\Action::make('publish')
+                    ->label('Publish Report')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Publish Report')
+                    ->modalDescription('This will send email and Slack notifications to the client. Are you sure you want to publish this report?')
+                    ->modalSubmitActionLabel('Yes, Publish Report')
+                    ->action(function (Report $record) {
+                        // Update status to sent
+                        $record->update(['status' => 'sent']);
+                        
+                        // Fire the event to send notifications
+                        ReportPublished::dispatch($record);
+                        
+                        Notification::make()
+                            ->title('Report Published Successfully')
+                            ->body('Notifications have been sent to the client via email and Slack.')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn (Report $record): bool => $record->status !== 'sent'),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])

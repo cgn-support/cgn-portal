@@ -40,5 +40,11 @@ class AppServiceProvider extends ServiceProvider
                 \App\Console\Commands\FetchTrackingMetrics::class,
             ]);
         }
+
+        // Register event listeners
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Events\ReportPublished::class,
+            \App\Listeners\SendReportNotifications::class
+        );
     }
 }

@@ -13,15 +13,70 @@
             <h1 class="gradient-heading mb-4">
                 {{ $report->report_month_name }} {{ $report->report_year }}
             </h1>
-            <h2 class="text-2xl font-semibold text-teal-800 mb-4">
-                Monthly Marketing <span class="text-orange-500">Report</span>
+            <h2 class="gradient-heading">
+                Monthly Marketing Report
             </h2>
         </div>
 
         <!-- Description Section -->
         @if ($report->content)
             <div class="mb-8">
-                <div class="prose prose-lg max-w-none">
+                <div
+                    class="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-600 prose-ul:text-gray-600 prose-li:text-gray-600 prose-strong:text-gray-900">
+                    <style>
+                        .prose ul {
+                            list-style-type: disc;
+                            padding-left: 1.625rem;
+                            margin-top: 1.25rem;
+                            margin-bottom: 1.25rem;
+                        }
+
+                        .prose ul li {
+                            margin-top: 0.5rem;
+                            margin-bottom: 0.5rem;
+                            padding-left: 0.375rem;
+                        }
+
+                        .prose ol {
+                            list-style-type: decimal;
+                            padding-left: 1.625rem;
+                            margin-top: 1.25rem;
+                            margin-bottom: 1.25rem;
+                        }
+
+                        .prose ol li {
+                            margin-top: 0.5rem;
+                            margin-bottom: 0.5rem;
+                            padding-left: 0.375rem;
+                        }
+
+                        .prose p {
+                            margin-top: 1.25rem;
+                            margin-bottom: 1.25rem;
+                            line-height: 1.75;
+                        }
+
+                        .prose strong {
+                            font-weight: 600;
+                        }
+
+                        .prose em {
+                            font-style: italic;
+                        }
+
+                        .prose u {
+                            text-decoration: underline;
+                        }
+
+                        .prose a {
+                            color: #f97316;
+                            text-decoration: underline;
+                        }
+
+                        .prose a:hover {
+                            color: #ea580c;
+                        }
+                    </style>
                     {!! $report->content !!}
                 </div>
             </div>
@@ -30,109 +85,44 @@
         <!-- Analytics Screenshot -->
         @if ($report->file_path)
             <div class="mb-8">
-                <img src="{{ asset('storage/' . $report->file_path) }}" alt="Analytics Dashboard"
-                    class="w-full rounded-lg shadow-md border border-gray-200">
+                <div class="relative overflow-hidden pt-6">
+                    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+                        <img src="{{ asset('storage/' . $report->file_path) }}" alt="Analytics Dashboard"
+                            class="rounded-xl ring-1 shadow-2xl ring-gray-900/10">
+                        <div class="relative" aria-hidden="true">
+                            <div class="absolute -inset-x-20 bottom-0 bg-gradient-to-t from-white pt-[7%]"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <a href="" class="p-4 bg-orange-600 text-white">Open The Full Report</a>
+            @if ($report->looker_studio_share_link)
+                <div class="flex justify-center">
+                    <a href="{{ $report->looker_studio_share_link }}" target="_blank"
+                        class="p-4 bg-orange-600 text-white rounded-lg shadow hover:bg-orange-700 transition-colors duration-200">Open
+                        The Full Report</a>
+                </div>
+            @endif
         @endif
 
         <!-- Marketing Metrics Grid -->
         <div class="my-8">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Marketing Metrics</h3>
-            <p class="text-gray-600 mb-6">The most important KPIs for your marketing campaign are below.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Row 1 -->
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">Organic Sessions</h4>
-                    <p class="text-3xl font-bold text-gray-900">1022</p>
-                </div>
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">Contact Button Users</h4>
-                    <p class="text-3xl font-bold text-gray-900">106</p>
-                </div>
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">Form Submissions</h4>
-                    <p class="text-3xl font-bold text-gray-900">13</p>
-                </div>
-
-                <!-- Row 2 -->
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">Web Phone Calls</h4>
-                    <p class="text-3xl font-bold text-gray-900">3</p>
-                </div>
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">GBP Phone Calls</h4>
-                    <p class="text-3xl font-bold text-gray-900">8</p>
-                </div>
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">GBP Listing Clicks</h4>
-                    <p class="text-3xl font-bold text-gray-900">12</p>
-                </div>
-
-                <!-- Row 3 -->
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">GBP Booking Clicks</h4>
-                    <p class="text-3xl font-bold text-gray-900">1</p>
-                </div>
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">Total Citations</h4>
-                    <p class="text-3xl font-bold text-gray-900">36</p>
-                </div>
-                <div class="agency-card p-6 text-center">
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">Total Reviews</h4>
-                    <p class="text-3xl font-bold text-gray-900">262</p>
-                </div>
-            </div>
+            <livewire:report-metrics :report="$report" />
         </div>
 
         <!-- Recently Published Content -->
         <div class="mb-8">
             <h3 class="text-xl font-semibold text-gray-800 mb-4">Recently Published Content</h3>
-            <p class="text-gray-600 mb-6">The content we have created and published for you in the last 30 days is
-                below.</p>
+            <p class="text-gray-600 mb-6">Blog posts published on your website during {{ $report->report_month_name }}
+                {{ $report->report_year }}.</p>
 
-            <div class="space-y-4">
-                <!-- Blog Post 1 -->
-                <div class="agency-card p-4 flex items-center space-x-4">
-                    <div class="w-16 h-16 bg-teal-800 rounded-lg flex items-center justify-center">
-                        <flux:icon.document-text class="w-8 h-8 text-white" />
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">The Future of SEO: Agency Insights</h4>
-                        <p class="text-sm text-gray-600">Jan 23, 2025</p>
-                    </div>
-                </div>
-
-                <!-- Blog Post 2 -->
-                <div class="agency-card p-4 flex items-center space-x-4">
-                    <div class="w-16 h-16 bg-orange-500 rounded-lg flex items-center justify-center">
-                        <flux:icon.document-text class="w-8 h-8 text-white" />
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">Digital Marketing For Contractors</h4>
-                        <p class="text-sm text-gray-600">Jan 19, 2025</p>
-                    </div>
-                </div>
-
-                <!-- Blog Post 3 -->
-                <div class="agency-card p-4 flex items-center space-x-4">
-                    <div class="w-16 h-16 bg-teal-800 rounded-lg flex items-center justify-center">
-                        <flux:icon.document-text class="w-8 h-8 text-white" />
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-gray-900">How To Get Construction Leads? Building Your Marketing
-                            Funnel</h4>
-                        <p class="text-sm text-gray-600">Dec 14, 2024</p>
-                    </div>
-                </div>
-            </div>
+            <livewire:recent-blog-posts :month="$report->report_year . '-' . str_pad($report->report_month, 2, '0', STR_PAD_LEFT) . '-01'" :project="$report->project" />
         </div>
 
         <!-- Completed Tasks (Monday.com) -->
         <div class="mb-8">
             <h3 class="text-xl font-semibold text-gray-800 mb-4">Project Completed Tasks</h3>
-            <p class="text-gray-600 mb-6">Tasks completed for your project in {{ $report->report_month_name }} {{ $report->report_year }}.</p>
+            <p class="text-gray-600 mb-6">Tasks completed for your project in {{ $report->report_month_name }}
+                {{ $report->report_year }}.</p>
 
             <livewire:report-tasks :report="$report" />
         </div>
