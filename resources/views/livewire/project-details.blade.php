@@ -282,6 +282,14 @@
 
                 <!-- Action Buttons -->
                 <div class="mt-14 space-y-3">
+                    <a href="{{ route('project.tasks', ['uuid' => $project->id]) }}"
+                        class="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        View Tasks
+                    </a>
+                    <a href="{{ route('project.leads', ['uuid' => $project->id]) }}"
+                        class="inline-flex w-full items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Manage Leads
+                    </a>
                     <a href="{{ route('project.reports', ['uuid' => $project->id]) }}"
                         class="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         View Reports

@@ -1,71 +1,28 @@
 <x-layouts.app>
-    <div class="mt-4 grid grid-cols-1 gap-4">
-        <div class="overflow-hidden aspect-video rounded-lg border border-neutral-200 dark:border-neutral-700">
-            <div class="mt-8 flow-root">
-                <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                    <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                        <div class="overflow-hidden shadow-sm ring-1 ring-black/5 sm:rounded-lg">
-                            <table class="min-w-full divide-y divide-gray-300">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col"
-                                            class="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                                            Name
-                                        </th>
-                                        <th scope="col"
-                                            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Validate
-                                        </th>
-                                        <th scope="col"
-                                            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Value</th>
-
-                                        <th scope="col"
-                                            class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
-                                        <th scope="col" class="relative py-3.5 pr-4 pl-3 sm:pr-6">Save
-                                            <span class="sr-only">Edit</span>
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 bg-white">
-                                    <tr>
-                                        <td
-                                            class="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-6">
-                                            Lindsay Walton
-                                        </td>
-                                        <td
-                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
-                                            <select>
-                                                <option>To Do</option>
-                                                <option>Is Valid</option>
-                                                <option>Low Quality / Spam</option>
-                                            </select>
-                                        </td>
-                                        <td><input type="text" class="" placeholder="Value" /></td>
-
-
-                                        <td class="px-3 py-4 text-sm whitespace-nowrap text-gray-500">05/12/2025</td>
-                                        <td><input type="submit"
-                                                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                                                value="Save" /></td>
-
-                                    </tr>
-
-                                    <!-- More people... -->
-                                </tbody>
-                            </table>
-                        </div>
+    <div class="flex-1 overflow-y-auto">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{{ route('project', ['uuid' => $project->id]) }}" 
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-orange-600">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L9 5.414V17a1 1 0 102 0V5.414l5.293 5.293a1 1 0 001.414-1.414l-7-7z"/>
+                        </svg>
+                        {{ $project->name }}
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="ml-1 text-sm font-medium text-gray-500 md:ml-2">Lead Management</span>
                     </div>
-                </div>
+                </li>
+            </ol>
+        </nav>
 
-                {{--    <div class="text-black dark:text-white mt-4"> --}}
-                {{--        <div> --}}
-                {{--            {!! $note->content !!} --}}
-                {{--        </div> --}}
-                {{--    </div> --}}
-            </div>
-        </div>
-        {{--        <div class="overflow-hidden aspect-video rounded-lg border border-neutral-200 dark:border-neutral-700"> --}}
-        {{--            <livewire:client-tasks-list :project="$project"/> --}}
-        {{--        </div> --}}
+        <livewire:project-leads :project="$project" />
     </div>
-
 </x-layouts.app>

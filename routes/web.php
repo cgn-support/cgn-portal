@@ -47,6 +47,12 @@ Route::middleware(['auth'])->group(function () {
         $project = Project::where('id', $uuid)->firstOrFail();
         return view('project', ['uuid' => $uuid, 'project' => $project]);
     })->name('project');
+    
+    // New improved project view
+    Route::get('project/{uuid}/improved', function (string $uuid) {
+        $project = Project::where('id', $uuid)->firstOrFail();
+        return view('project-improved', ['uuid' => $uuid, 'project' => $project]);
+    })->name('project.improved');
 
     Route::get('project/{uuid}/updates', function ($uuid) {
         $project = Project::where('id', $uuid)->firstOrFail();
@@ -56,7 +62,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('project/{uuid}/tasks', function ($uuid) {
         $project = Project::where('id', $uuid)->firstOrFail();
         return view('tasks', compact('project'));
-    });
+    })->name('project.tasks');
 
     Route::get('project/{uuid}/users', function ($uuid) {
         $project = Project::where('id', $uuid)->firstOrFail();

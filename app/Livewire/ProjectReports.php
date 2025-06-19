@@ -35,10 +35,12 @@ class ProjectReports extends Component
     {
         return Report::where('project_id', $this->project->id)
             ->where('status', 'sent') // Only published reports
-            ->selectRaw('YEAR(report_date) as year')
-            ->distinct()
-            ->orderBy('year', 'desc')
-            ->pluck('year')
+            ->get(['report_date'])
+            ->map(fn($report) => $report->report_date->year)
+            ->unique()
+            ->sort()
+            ->reverse()
+            ->values()
             ->toArray();
     }
 

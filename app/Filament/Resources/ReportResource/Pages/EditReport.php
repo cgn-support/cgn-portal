@@ -5,6 +5,9 @@ namespace App\Filament\Resources\ReportResource\Pages;
 use App\Filament\Resources\ReportResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use App\Events\ReportPublished;
+use App\Models\Report;
+use Filament\Notifications\Notification;
 
 class EditReport extends EditRecord
 {
