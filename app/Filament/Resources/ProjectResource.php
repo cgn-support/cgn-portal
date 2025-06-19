@@ -144,6 +144,11 @@ class ProjectResource extends Resource
                             ->url()
                             ->maxLength(255)
                             ->nullable(),
+                        Forms\Components\TextInput::make('keywords_com_project_name')
+                            ->label('Keywords.com Project Name')
+                            ->helperText('The project name used in Keywords.com for keyword ranking tracking')
+                            ->maxLength(255)
+                            ->nullable(),
                         Forms\Components\TextInput::make('specialist_monday_id')->label('Specialist (Monday User ID)')->disabled()->nullable(),
                         Forms\Components\TextInput::make('content_writer_monday_id')->label('Content Writer (Monday User ID)')->disabled()->nullable(),
                         Forms\Components\TextInput::make('developer_monday_id')->label('Developer (Monday User ID)')->disabled()->nullable(),

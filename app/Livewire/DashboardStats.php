@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Project;
 use App\Services\Tracking\TrackingAnalyticsService;
+use App\Services\KeywordApiService;
 use Livewire\Component;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -18,8 +19,15 @@ class DashboardStats extends Component
     public $visitorCount = 0;
     public $callCount = 0;
     public $formCount = 0;
-    public $conversionRate = 0;
-    public $totalLeadsValue = 0;
+    public $keywordsInTop3 = 0;
+    public $keywordsInTop10 = 0;
+
+    // Previous period metrics for comparison
+    public $previousVisitorCount = 0;
+    public $previousCallCount = 0;
+    public $previousFormCount = 0;
+    public $previousKeywordsInTop3 = 0;
+    public $previousKeywordsInTop10 = 0;
 
     // Chart data
     public $chartData = [];
@@ -46,11 +54,14 @@ class DashboardStats extends Component
 
         try {
             $analyticsService = app(TrackingAnalyticsService::class);
+            $keywordService = app(KeywordApiService::class);
 
             if ($this->selectedProjectId === 'all') {
-                $this->loadAllProjectsStats($analyticsService);
+                $this->loadAllProjectsStats($analyticsService, $keywordService);
+                $this->loadAllProjectsPreviousStats($analyticsService, $keywordService);
             } else {
-                $this->loadSingleProjectStats($analyticsService);
+                $this->loadSingleProjectStats($analyticsService, $keywordService);
+                $this->loadSingleProjectPreviousStats($analyticsService, $keywordService);
             }
 
             $this->loadChartData($analyticsService);
@@ -62,7 +73,7 @@ class DashboardStats extends Component
         $this->isLoading = false;
     }
 
-    private function loadAllProjectsStats($analyticsService)
+    private function loadAllProjectsStats($analyticsService, $keywordService)
     {
         $totalMetrics = [
             'unique_visitors' => 0,
@@ -70,7 +81,12 @@ class DashboardStats extends Component
             'form_submissions' => 0,
         ];
 
-        $totalLeadsValue = 0;
+        $totalKeywordMetrics = [
+            'keywords_in_top_3' => 0,
+            'keywords_in_top_10' => 0,
+        ];
+
+        $currentDate = $this->getCurrentDateForRange();
 
         foreach ($this->projects as $project) {
             $metrics = $analyticsService->getProjectMetrics($project, $this->selectedDateRange);
@@ -79,29 +95,57 @@ class DashboardStats extends Component
             $totalMetrics['phone_calls'] += $metrics['phone_calls'] ?? 0;
             $totalMetrics['form_submissions'] += $metrics['form_submissions'] ?? 0;
 
-            // Get leads value for this project
-            $leadsValue = $project->leads()
-                ->where('status', 'closed')
-                ->whereNotNull('value')
-                ->when($this->selectedDateRange !== 'all_time', function ($query) {
-                    $dates = $this->getDateRange();
-                    return $query->whereBetween('submitted_at', [$dates['start'], $dates['end']]);
-                })
-                ->sum('value');
-
-            $totalLeadsValue += $leadsValue;
+            // Get keyword metrics for this project
+            $keywordMetrics = $keywordService->getProjectKeywords($project, $currentDate);
+            $totalKeywordMetrics['keywords_in_top_3'] += $keywordMetrics['keywords_in_top_3'];
+            $totalKeywordMetrics['keywords_in_top_10'] += $keywordMetrics['keywords_in_top_10'];
         }
 
         $this->visitorCount = $totalMetrics['unique_visitors'];
         $this->callCount = $totalMetrics['phone_calls'];
         $this->formCount = $totalMetrics['form_submissions'];
-        $this->totalLeadsValue = $totalLeadsValue;
-
-        $totalLeads = $this->callCount + $this->formCount;
-        $this->conversionRate = $this->visitorCount > 0 ? round(($totalLeads / $this->visitorCount) * 100, 1) : 0;
+        $this->keywordsInTop3 = $totalKeywordMetrics['keywords_in_top_3'];
+        $this->keywordsInTop10 = $totalKeywordMetrics['keywords_in_top_10'];
     }
 
-    private function loadSingleProjectStats($analyticsService)
+    private function loadAllProjectsPreviousStats($analyticsService, $keywordService)
+    {
+        $previousDateRange = $this->getPreviousDateRange();
+        
+        $totalMetrics = [
+            'unique_visitors' => 0,
+            'phone_calls' => 0,
+            'form_submissions' => 0,
+        ];
+
+        $totalKeywordMetrics = [
+            'keywords_in_top_3' => 0,
+            'keywords_in_top_10' => 0,
+        ];
+
+        $previousDate = $this->getPreviousDateForRange();
+
+        foreach ($this->projects as $project) {
+            $metrics = $analyticsService->getProjectMetrics($project, $previousDateRange);
+
+            $totalMetrics['unique_visitors'] += $metrics['unique_visitors'] ?? 0;
+            $totalMetrics['phone_calls'] += $metrics['phone_calls'] ?? 0;
+            $totalMetrics['form_submissions'] += $metrics['form_submissions'] ?? 0;
+
+            // Get keyword metrics for this project
+            $keywordMetrics = $keywordService->getProjectKeywords($project, $previousDate);
+            $totalKeywordMetrics['keywords_in_top_3'] += $keywordMetrics['keywords_in_top_3'];
+            $totalKeywordMetrics['keywords_in_top_10'] += $keywordMetrics['keywords_in_top_10'];
+        }
+
+        $this->previousVisitorCount = $totalMetrics['unique_visitors'];
+        $this->previousCallCount = $totalMetrics['phone_calls'];
+        $this->previousFormCount = $totalMetrics['form_submissions'];
+        $this->previousKeywordsInTop3 = $totalKeywordMetrics['keywords_in_top_3'];
+        $this->previousKeywordsInTop10 = $totalKeywordMetrics['keywords_in_top_10'];
+    }
+
+    private function loadSingleProjectStats($analyticsService, $keywordService)
     {
         $project = $this->projects->find($this->selectedProjectId);
 
@@ -116,18 +160,34 @@ class DashboardStats extends Component
         $this->callCount = $metrics['phone_calls'] ?? 0;
         $this->formCount = $metrics['form_submissions'] ?? 0;
 
-        // Get leads value for this project
-        $this->totalLeadsValue = $project->leads()
-            ->where('status', 'closed')
-            ->whereNotNull('value')
-            ->when($this->selectedDateRange !== 'all_time', function ($query) {
-                $dates = $this->getDateRange();
-                return $query->whereBetween('submitted_at', [$dates['start'], $dates['end']]);
-            })
-            ->sum('value');
+        // Get keyword metrics for this project
+        $currentDate = $this->getCurrentDateForRange();
+        $keywordMetrics = $keywordService->getProjectKeywords($project, $currentDate);
+        $this->keywordsInTop3 = $keywordMetrics['keywords_in_top_3'];
+        $this->keywordsInTop10 = $keywordMetrics['keywords_in_top_10'];
+    }
 
-        $totalLeads = $this->callCount + $this->formCount;
-        $this->conversionRate = $this->visitorCount > 0 ? round(($totalLeads / $this->visitorCount) * 100, 1) : 0;
+    private function loadSingleProjectPreviousStats($analyticsService, $keywordService)
+    {
+        $project = $this->projects->find($this->selectedProjectId);
+
+        if (!$project) {
+            $this->resetPreviousStats();
+            return;
+        }
+
+        $previousDateRange = $this->getPreviousDateRange();
+        $metrics = $analyticsService->getProjectMetrics($project, $previousDateRange);
+
+        $this->previousVisitorCount = $metrics['unique_visitors'] ?? 0;
+        $this->previousCallCount = $metrics['phone_calls'] ?? 0;
+        $this->previousFormCount = $metrics['form_submissions'] ?? 0;
+
+        // Get keyword metrics for this project
+        $previousDate = $this->getPreviousDateForRange();
+        $keywordMetrics = $keywordService->getProjectKeywords($project, $previousDate);
+        $this->previousKeywordsInTop3 = $keywordMetrics['keywords_in_top_3'];
+        $this->previousKeywordsInTop10 = $keywordMetrics['keywords_in_top_10'];
     }
 
     private function loadChartData($analyticsService)
@@ -199,10 +259,97 @@ class DashboardStats extends Component
         $this->visitorCount = 0;
         $this->callCount = 0;
         $this->formCount = 0;
-        $this->conversionRate = 0;
-        $this->totalLeadsValue = 0;
+        $this->keywordsInTop3 = 0;
+        $this->keywordsInTop10 = 0;
         $this->chartData = [];
         $this->chartLabels = [];
+        $this->resetPreviousStats();
+    }
+
+    private function resetPreviousStats()
+    {
+        $this->previousVisitorCount = 0;
+        $this->previousCallCount = 0;
+        $this->previousFormCount = 0;
+        $this->previousKeywordsInTop3 = 0;
+        $this->previousKeywordsInTop10 = 0;
+    }
+
+    private function getPreviousDateRange()
+    {
+        return match ($this->selectedDateRange) {
+            'today' => 'yesterday',
+            'last_7_days' => 'previous_7_days',
+            'last_30_days' => 'previous_30_days',
+            'this_month' => 'previous_month',
+            default => 'previous_30_days',
+        };
+    }
+
+    private function getPreviousDateRangeDates()
+    {
+        $now = Carbon::now();
+
+        return match ($this->selectedDateRange) {
+            'today' => [
+                'start' => $now->copy()->subDay()->startOfDay(),
+                'end' => $now->copy()->subDay()->endOfDay(),
+            ],
+            'last_7_days' => [
+                'start' => $now->copy()->subDays(14)->startOfDay(),
+                'end' => $now->copy()->subDays(8)->endOfDay(),
+            ],
+            'last_30_days' => [
+                'start' => $now->copy()->subDays(60)->startOfDay(),
+                'end' => $now->copy()->subDays(31)->endOfDay(),
+            ],
+            'this_month' => [
+                'start' => $now->copy()->subMonth()->startOfMonth(),
+                'end' => $now->copy()->subMonth()->endOfMonth(),
+            ],
+            default => [
+                'start' => $now->copy()->subDays(60)->startOfDay(),
+                'end' => $now->copy()->subDays(31)->endOfDay(),
+            ],
+        };
+    }
+
+    public function getPercentageChange($current, $previous)
+    {
+        if ($previous == 0) {
+            return $current > 0 ? 100 : 0;
+        }
+        
+        return round((($current - $previous) / $previous) * 100, 1);
+    }
+
+    public function getTrendDirection($current, $previous)
+    {
+        if ($current > $previous) return 'up';
+        if ($current < $previous) return 'down';
+        return 'neutral';
+    }
+
+    private function getCurrentDateForRange()
+    {
+        return match ($this->selectedDateRange) {
+            'today' => now()->format('Y-m-d'),
+            'last_7_days' => now()->format('Y-m-d'),
+            'last_30_days' => now()->format('Y-m-d'),
+            'this_month' => now()->format('Y-m-d'),
+            default => now()->format('Y-m-d'),
+        };
+    }
+
+    private function getPreviousDateForRange()
+    {
+        return match ($this->selectedDateRange) {
+            'today' => now()->subDay()->format('Y-m-d'),
+            'last_7_days' => now()->subDays(7)->format('Y-m-d'),
+            'last_30_days' => now()->subDays(30)->format('Y-m-d'),
+            'this_month' => now()->subMonth()->format('Y-m-d'),
+            default => now()->subDays(30)->format('Y-m-d'),
+        };
     }
 
     public function render()

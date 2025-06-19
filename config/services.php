@@ -48,5 +48,10 @@ return [
         'timeout' => env('TRACKING_API_TIMEOUT', 30),
     ],
 
+    'keywords_com' => [
+        'api_key' => env('KEYWORDS_COM_API_KEY'),
+        'url' => env('KEYWORDS_COM_API_URL', 'https://app.keyword.com/api/v2'),
+    ],
+
 
 ];

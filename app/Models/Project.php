@@ -40,6 +40,7 @@ class Project extends Model
         'wp_umbrella_project_id',
         'project_start_date',
         'my_maps_share_link',
+        'keywords_com_project_name',
         'status',
     ];
 
