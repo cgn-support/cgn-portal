@@ -1,6 +1,6 @@
 <div class="space-y-6">
     <!-- Header with filters -->
-    <div class="flex flex-col p-6 lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
             <h3 class="text-lg font-bold text-neutral-900 dark:text-neutral-100">Manage Projects</h3>
             <p class="text-sm text-gray-600 dark:text-gray-400">Manage and monitor your marketing projects</p>
@@ -34,14 +34,14 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search Projects</label>
                 <input type="text" wire:model.live.debounce.300ms="search" placeholder="Search by business name..."
-                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
+                    class="w-full rounded-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
             </div>
 
             <!-- Status Filter -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
                 <select wire:model.live="statusFilter"
-                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
+                    class="w-full rounded-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
                     <option value="all">All Statuses</option>
                     <option value="active">Active</option>
                     <option value="paused">Paused</option>
@@ -54,7 +54,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sort By</label>
                 <select wire:model.live="sortBy"
-                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
+                    class="w-full rounded-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-primary-500">
                     <option value="updated_at">Last Updated</option>
                     <option value="created_at">Created Date</option>
                     <option value="status">Status</option>
@@ -169,7 +169,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-right text-sm font-medium space-x-2">
                                     <a href="{{ '/project/' . $project->id }}"
-                                        class="inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-primary-500 text-white text-sm font-medium rounded-md transition-colors">
+                                        class="inline-flex items-center px-3 py-1.5 bg-orange-600 hover:bg-primary-500 text-white text-sm font-medium rounded-full transition-colors">
                                         Manage
                                     </a>
                                 </td>
@@ -270,7 +270,7 @@
 
                     <!-- Action Button -->
                     <a href="{{ '/project/' . $project->id }}"
-                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-orange-600 hover:bg-primary-500 text-white text-sm font-medium rounded-md transition-colors">
+                        class="w-full inline-flex justify-center items-center px-4 py-2 bg-orange-600 hover:bg-primary-500 text-white text-sm font-medium rounded-full transition-colors">
                         Manage Project
                     </a>
                 </div>

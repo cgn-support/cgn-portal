@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Project;
 use App\Services\Tracking\TrackingAnalyticsService;
+use App\Services\Tracking\TrackingCacheService;
 use App\Services\KeywordApiService;
 use Livewire\Component;
 use Carbon\Carbon;
@@ -63,13 +64,22 @@ class ProjectStats extends Component
 
     private function loadProjectStats($analyticsService, $keywordService)
     {
-        $metrics = $analyticsService->getProjectMetrics($this->project, $this->selectedDateRange);
+        $cacheService = app(TrackingCacheService::class);
+        
+        // Cache lead metrics (visitors, calls, forms) for 24 hours
+        $leadMetrics = $cacheService->getOrSetLeadMetrics(
+            $this->project->id, 
+            $this->selectedDateRange,
+            function () use ($analyticsService) {
+                return $analyticsService->getProjectMetrics($this->project, $this->selectedDateRange);
+            }
+        );
 
-        $this->visitorCount = $metrics['unique_visitors'] ?? 0;
-        $this->callCount = $metrics['phone_calls'] ?? 0;
-        $this->formCount = $metrics['form_submissions'] ?? 0;
+        $this->visitorCount = $leadMetrics['unique_visitors'] ?? 0;
+        $this->callCount = $leadMetrics['phone_calls'] ?? 0;
+        $this->formCount = $leadMetrics['form_submissions'] ?? 0;
 
-        // Get keyword metrics for this project
+        // Get keyword metrics for this project (already cached for 7 days in KeywordApiService)
         $currentDate = $this->getCurrentDateForRange();
         $keywordMetrics = $keywordService->getProjectKeywords($this->project, $currentDate);
         $this->keywordsInTop3 = $keywordMetrics['keywords_in_top_3'];
@@ -78,14 +88,23 @@ class ProjectStats extends Component
 
     private function loadProjectPreviousStats($analyticsService, $keywordService)
     {
+        $cacheService = app(TrackingCacheService::class);
         $previousDateRange = $this->getPreviousDateRange();
-        $metrics = $analyticsService->getProjectMetrics($this->project, $previousDateRange);
+        
+        // Cache previous period lead metrics for 24 hours
+        $previousMetrics = $cacheService->getOrSetLeadMetrics(
+            $this->project->id . '_previous', 
+            $previousDateRange,
+            function () use ($analyticsService, $previousDateRange) {
+                return $analyticsService->getProjectMetrics($this->project, $previousDateRange);
+            }
+        );
 
-        $this->previousVisitorCount = $metrics['unique_visitors'] ?? 0;
-        $this->previousCallCount = $metrics['phone_calls'] ?? 0;
-        $this->previousFormCount = $metrics['form_submissions'] ?? 0;
+        $this->previousVisitorCount = $previousMetrics['unique_visitors'] ?? 0;
+        $this->previousCallCount = $previousMetrics['phone_calls'] ?? 0;
+        $this->previousFormCount = $previousMetrics['form_submissions'] ?? 0;
 
-        // Get keyword metrics for this project
+        // Get keyword metrics for this project (already cached for 7 days in KeywordApiService)
         $previousDate = $this->getPreviousDateForRange();
         $keywordMetrics = $keywordService->getProjectKeywords($this->project, $previousDate);
         $this->previousKeywordsInTop3 = $keywordMetrics['keywords_in_top_3'];

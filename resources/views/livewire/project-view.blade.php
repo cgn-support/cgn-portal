@@ -6,8 +6,7 @@
                 <!-- Account Manager Info -->
                 <div class="flex items-center space-x-4">
                     <div class="flex-shrink-0">
-                        <img class="h-12 w-12 rounded-full"
-                            src="https://files.monday.com/use1/photos/55207138/small/55207138-user_photo_2024_01_30_15_45_21.png?1706629521"
+                        <img class="h-12 w-12 rounded-full" src="{{ $accountManagerPhoto }}"
                             alt="{{ $project->accountManager->name ?? 'Account Manager' }}">
                     </div>
                     <div>
@@ -31,12 +30,12 @@
                 <!-- Action Buttons -->
                 <div class="flex space-x-3">
                     <a href="https://slack.com" target="_blank"
-                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-full text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Chat With Team
                     </a>
                     <a href="https://www.local-marketing-reports.com/location-dashboard/c567222026bcf219cee102a98dc43fd811bdd61c/summary"
                         target="_blank"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                         My Local SEO
                     </a>
                 </div>
@@ -58,7 +57,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
             <!-- Project Information Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Project Information</h3>
                 <dl class="space-y-4">
                     <div>
@@ -111,7 +110,7 @@
             </div>
 
             <!-- Quick Stats Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Stats</h3>
                 <dl class="space-y-4">
                     <div class="flex justify-between">
@@ -146,7 +145,7 @@
             </div>
 
             <!-- Project Timeline Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Project Timeline</h3>
                 <div class="space-y-4">
                     @foreach ($projectStages as $stage)
@@ -192,7 +191,7 @@
         <!-- Action Buttons Row -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <a href="{{ route('project.tasks', ['uuid' => $project->id]) }}"
-                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
@@ -202,7 +201,7 @@
             </a>
 
             <a href="{{ route('project.leads', ['uuid' => $project->id]) }}"
-                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
@@ -212,7 +211,7 @@
             </a>
 
             <a href="{{ route('project.reports', ['uuid' => $project->id]) }}"
-                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
@@ -222,7 +221,7 @@
             </a>
 
             <a href="{{ route('project.map', ['uuid' => $project->id ?? 'default-uuid']) }}"
-                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-full text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">

@@ -36,8 +36,9 @@ class KeywordApiService
 
         $date = $date ?? now()->format('Y-m-d');
         $cacheKey = "keywords_rankings_{$project->id}_{$date}";
+        $cacheTtl = 7 * 24 * 60 * 60; // 7 days in seconds
 
-        return Cache::remember($cacheKey, 300, function () use ($project, $date) {
+        return Cache::remember($cacheKey, $cacheTtl, function () use ($project, $date) {
             return $this->fetchKeywordData($project, $date);
         });
     }

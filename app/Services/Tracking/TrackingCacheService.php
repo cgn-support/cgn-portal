@@ -10,12 +10,18 @@ class TrackingCacheService
     private int $aggregateMetricsTtl;
     private int $sessionJourneyTtl;
     private int $apiHealthTtl;
+    private int $leadMetricsTtl;
+    private int $chartDataTtl;
+    private int $weeklyDataTtl;
 
     public function __construct()
     {
         $this->aggregateMetricsTtl = config('cache.tracking.aggregate_metrics_ttl', 30 * 60); // 30 minutes
         $this->sessionJourneyTtl = config('cache.tracking.session_journey_ttl', 2 * 60 * 60); // 2 hours
         $this->apiHealthTtl = config('cache.tracking.api_health_ttl', 5 * 60); // 5 minutes
+        $this->leadMetricsTtl = config('cache.tracking.lead_metrics_ttl', 24 * 60 * 60); // 24 hours
+        $this->chartDataTtl = config('cache.tracking.chart_data_ttl', 60 * 60); // 1 hour
+        $this->weeklyDataTtl = config('cache.tracking.weekly_data_ttl', 7 * 24 * 60 * 60); // 7 days
     }
 
     /**
@@ -143,6 +149,56 @@ class TrackingCacheService
     public function getApiHealthTtl(): int
     {
         return $this->apiHealthTtl;
+    }
+
+    /**
+     * Cache key for lead metrics
+     */
+    public function getLeadMetricsKey(string $projectId, string $dateRange): string
+    {
+        return "tracking:project:{$projectId}:lead_metrics:{$dateRange}";
+    }
+
+    /**
+     * Cache key for chart data
+     */
+    public function getChartDataKey(string $identifier, string $dateRange): string
+    {
+        return "tracking:chart_data:{$identifier}:{$dateRange}";
+    }
+
+    /**
+     * Get or set lead metrics cache (24 hours)
+     */
+    public function getOrSetLeadMetrics(string $projectId, string $dateRange, callable $callback): array
+    {
+        $key = $this->getLeadMetricsKey($projectId, $dateRange);
+        return Cache::remember($key, $this->leadMetricsTtl, $callback);
+    }
+
+    /**
+     * Get or set chart data cache (1 hour)
+     */
+    public function getOrSetChartData(string $identifier, string $dateRange, callable $callback): array
+    {
+        $key = $this->getChartDataKey($identifier, $dateRange);
+        return Cache::remember($key, $this->chartDataTtl, $callback);
+    }
+
+    /**
+     * Get or set weekly data cache (7 days)
+     */
+    public function getOrSetWeeklyData(string $key, callable $callback): array
+    {
+        return Cache::remember($key, $this->weeklyDataTtl, $callback);
+    }
+
+    /**
+     * Get cache with custom TTL
+     */
+    public function getOrSetWithTtl(string $key, int $ttl, callable $callback)
+    {
+        return Cache::remember($key, $ttl, $callback);
     }
 
     /**

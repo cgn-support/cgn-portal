@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Project;
 use App\Services\Tracking\TrackingAnalyticsService;
+use App\Services\Tracking\TrackingCacheService;
 use App\Services\KeywordApiService;
 use Livewire\Component;
 use Carbon\Carbon;
@@ -75,37 +76,48 @@ class DashboardStats extends Component
 
     private function loadAllProjectsStats($analyticsService, $keywordService)
     {
-        $totalMetrics = [
-            'unique_visitors' => 0,
-            'phone_calls' => 0,
-            'form_submissions' => 0,
-        ];
+        $cacheService = app(TrackingCacheService::class);
+        
+        // Cache aggregated dashboard stats for 1 hour
+        $allProjectsData = $cacheService->getOrSetChartData(
+            'dashboard_all_projects',
+            $this->selectedDateRange,
+            function () use ($analyticsService, $keywordService) {
+                $totalMetrics = [
+                    'unique_visitors' => 0,
+                    'phone_calls' => 0,
+                    'form_submissions' => 0,
+                ];
 
-        $totalKeywordMetrics = [
-            'keywords_in_top_3' => 0,
-            'keywords_in_top_10' => 0,
-        ];
+                $totalKeywordMetrics = [
+                    'keywords_in_top_3' => 0,
+                    'keywords_in_top_10' => 0,
+                ];
 
-        $currentDate = $this->getCurrentDateForRange();
+                $currentDate = $this->getCurrentDateForRange();
 
-        foreach ($this->projects as $project) {
-            $metrics = $analyticsService->getProjectMetrics($project, $this->selectedDateRange);
+                foreach ($this->projects as $project) {
+                    $metrics = $analyticsService->getProjectMetrics($project, $this->selectedDateRange);
 
-            $totalMetrics['unique_visitors'] += $metrics['unique_visitors'] ?? 0;
-            $totalMetrics['phone_calls'] += $metrics['phone_calls'] ?? 0;
-            $totalMetrics['form_submissions'] += $metrics['form_submissions'] ?? 0;
+                    $totalMetrics['unique_visitors'] += $metrics['unique_visitors'] ?? 0;
+                    $totalMetrics['phone_calls'] += $metrics['phone_calls'] ?? 0;
+                    $totalMetrics['form_submissions'] += $metrics['form_submissions'] ?? 0;
 
-            // Get keyword metrics for this project
-            $keywordMetrics = $keywordService->getProjectKeywords($project, $currentDate);
-            $totalKeywordMetrics['keywords_in_top_3'] += $keywordMetrics['keywords_in_top_3'];
-            $totalKeywordMetrics['keywords_in_top_10'] += $keywordMetrics['keywords_in_top_10'];
-        }
+                    // Get keyword metrics for this project (already cached for 7 days)
+                    $keywordMetrics = $keywordService->getProjectKeywords($project, $currentDate);
+                    $totalKeywordMetrics['keywords_in_top_3'] += $keywordMetrics['keywords_in_top_3'];
+                    $totalKeywordMetrics['keywords_in_top_10'] += $keywordMetrics['keywords_in_top_10'];
+                }
 
-        $this->visitorCount = $totalMetrics['unique_visitors'];
-        $this->callCount = $totalMetrics['phone_calls'];
-        $this->formCount = $totalMetrics['form_submissions'];
-        $this->keywordsInTop3 = $totalKeywordMetrics['keywords_in_top_3'];
-        $this->keywordsInTop10 = $totalKeywordMetrics['keywords_in_top_10'];
+                return array_merge($totalMetrics, $totalKeywordMetrics);
+            }
+        );
+
+        $this->visitorCount = $allProjectsData['unique_visitors'];
+        $this->callCount = $allProjectsData['phone_calls'];
+        $this->formCount = $allProjectsData['form_submissions'];
+        $this->keywordsInTop3 = $allProjectsData['keywords_in_top_3'];
+        $this->keywordsInTop10 = $allProjectsData['keywords_in_top_10'];
     }
 
     private function loadAllProjectsPreviousStats($analyticsService, $keywordService)
@@ -192,38 +204,50 @@ class DashboardStats extends Component
 
     private function loadChartData($analyticsService)
     {
-        // Simple 7-day trending for the chart
-        $chartData = ['visitors' => [], 'leads' => []];
-        $labels = [];
+        $cacheService = app(TrackingCacheService::class);
+        
+        // Cache chart data for 1 hour
+        $chartIdentifier = $this->selectedProjectId === 'all' ? 'dashboard_all' : "dashboard_project_{$this->selectedProjectId}";
+        
+        $cachedChartData = $cacheService->getOrSetChartData(
+            $chartIdentifier,
+            'chart_7_days',
+            function () use ($analyticsService) {
+                $chartData = ['visitors' => [], 'leads' => []];
+                $labels = [];
 
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::now()->subDays($i);
-            $labels[] = $date->format('M j');
+                for ($i = 6; $i >= 0; $i--) {
+                    $date = Carbon::now()->subDays($i);
+                    $labels[] = $date->format('M j');
 
-            if ($this->selectedProjectId === 'all') {
-                $dayVisitors = 0;
-                $dayLeads = 0;
+                    if ($this->selectedProjectId === 'all') {
+                        $dayVisitors = 0;
+                        $dayLeads = 0;
 
-                foreach ($this->projects as $project) {
-                    $dayMetrics = $analyticsService->getProjectMetrics($project, 'day_' . $date->toDateString());
-                    $dayVisitors += $dayMetrics['unique_visitors'] ?? 0;
-                    $dayLeads += ($dayMetrics['phone_calls'] ?? 0) + ($dayMetrics['form_submissions'] ?? 0);
+                        foreach ($this->projects as $project) {
+                            $dayMetrics = $analyticsService->getProjectMetrics($project, 'day_' . $date->toDateString());
+                            $dayVisitors += $dayMetrics['unique_visitors'] ?? 0;
+                            $dayLeads += ($dayMetrics['phone_calls'] ?? 0) + ($dayMetrics['form_submissions'] ?? 0);
+                        }
+
+                        $chartData['visitors'][] = $dayVisitors;
+                        $chartData['leads'][] = $dayLeads;
+                    } else {
+                        $project = $this->projects->find($this->selectedProjectId);
+                        if ($project) {
+                            $dayMetrics = $analyticsService->getProjectMetrics($project, 'day_' . $date->toDateString());
+                            $chartData['visitors'][] = $dayMetrics['unique_visitors'] ?? 0;
+                            $chartData['leads'][] = ($dayMetrics['phone_calls'] ?? 0) + ($dayMetrics['form_submissions'] ?? 0);
+                        }
+                    }
                 }
 
-                $chartData['visitors'][] = $dayVisitors;
-                $chartData['leads'][] = $dayLeads;
-            } else {
-                $project = $this->projects->find($this->selectedProjectId);
-                if ($project) {
-                    $dayMetrics = $analyticsService->getProjectMetrics($project, 'day_' . $date->toDateString());
-                    $chartData['visitors'][] = $dayMetrics['unique_visitors'] ?? 0;
-                    $chartData['leads'][] = ($dayMetrics['phone_calls'] ?? 0) + ($dayMetrics['form_submissions'] ?? 0);
-                }
+                return ['data' => $chartData, 'labels' => $labels];
             }
-        }
+        );
 
-        $this->chartData = $chartData;
-        $this->chartLabels = $labels;
+        $this->chartData = $cachedChartData['data'];
+        $this->chartLabels = $cachedChartData['labels'];
     }
 
     private function getDateRange()

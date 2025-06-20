@@ -16,11 +16,13 @@ class ProjectView extends Component
     public $business;
     public $quickStats = [];
     public $projectStages = [];
+    public $accountManagerPhoto;
 
     public function mount(string $uuid)
     {
         $this->project = Project::where('id', $uuid)->firstOrFail();
         $this->business = $this->project->business;
+        $this->accountManagerPhoto = $this->getAccountManagerPhoto();
         
         $this->loadQuickStats();
         $this->loadProjectStages();
@@ -45,7 +47,6 @@ class ProjectView extends Component
         // color_mkrt1658 = Website stage  
         // color_mkrvx17w = Branding stage
         
-        // For now using mock data - would integrate with Monday.com API
         $mondayData = $this->getMondayProjectData();
         
         $this->projectStages = [
@@ -189,6 +190,13 @@ class ProjectView extends Component
         return collect($completedStatuses)->contains(fn($completed) => 
             stripos($status, $completed) !== false
         );
+    }
+
+    public function getAccountManagerPhoto()
+    {
+        $mondayService = app(MondayApiService::class);
+        $userPhoto = $mondayService->getMondayUserProfilePhoto($this->project->accountManager->monday_user_id);
+        return $userPhoto;
     }
 
     protected function getStageDate($status)

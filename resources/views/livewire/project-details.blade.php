@@ -24,12 +24,12 @@
         <div
             class="mt-6 flex flex-col-reverse justify-stretch space-y-4 space-y-reverse sm:flex-row-reverse sm:justify-end sm:space-y-0 sm:space-x-3 sm:space-x-reverse md:mt-0 md:flex-row md:space-x-3">
             <a href="https://slack.com" target="_blank"
-                class="inline-flex items-center justify-center rounded-md bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow ring-1 ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 dark:ring-gray-600 dark:hover:bg-gray-600">
+                class="inline-flex items-center justify-center rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow ring-1 ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-gray-100 dark:ring-gray-600 dark:hover:bg-gray-600">
                 Chat With Team
             </a>
             <a href="https://www.local-marketing-reports.com/location-dashboard/c567222026bcf219cee102a98dc43fd811bdd61c/summary"
                 target="_blank"
-                class="inline-flex items-center justify-center rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                class="inline-flex items-center justify-center rounded-full bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                 My Local SEO
             </a>
         </div>
@@ -100,7 +100,7 @@
                                 <dt class="text-sm font-semibold text-gray-700 dark:text-gray-300">Attachments</dt>
                                 <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">
                                     <ul role="list"
-                                        class="divide-y divide-gray-200 dark:divide-gray-600 rounded-md border border-gray-200 dark:border-gray-600">
+                                        class="divide-y divide-gray-200 dark:divide-gray-600 rounded-full border border-gray-200 dark:border-gray-600">
                                         <li class="flex items-center justify-between py-2 px-3">
                                             <div class="flex w-0 flex-1 items-center space-x-2">
                                                 <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
@@ -283,19 +283,19 @@
                 <!-- Action Buttons -->
                 <div class="mt-14 space-y-3">
                     <a href="{{ route('project.tasks', ['uuid' => $project->id]) }}"
-                        class="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        class="inline-flex w-full items-center justify-center rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         View Tasks
                     </a>
                     <a href="{{ route('project.leads', ['uuid' => $project->id]) }}"
-                        class="inline-flex w-full items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        class="inline-flex w-full items-center justify-center rounded-full bg-green-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                         Manage Leads
                     </a>
                     <a href="{{ route('project.reports', ['uuid' => $project->id]) }}"
-                        class="inline-flex w-full items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        class="inline-flex w-full items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         View Reports
                     </a>
                     <a href="{{ route('project.map', ['uuid' => $project->id ?? 'default-uuid']) }}"
-                        class="inline-flex w-full items-center justify-center rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                        class="inline-flex w-full items-center justify-center rounded-full bg-orange-600 px-4 py-2 text-sm font-medium text-white shadow hover:bg-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                         Project Gantt Chart
                     </a>
                 </div>

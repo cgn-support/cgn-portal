@@ -2,7 +2,7 @@
     <!-- Header and Filters -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Project Performance</h3>
+            <h3 class="gradient-heading">Project Performance</h3>
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Track your marketing metrics and keyword rankings
             </p>
         </div>

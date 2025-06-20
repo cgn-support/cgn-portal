@@ -8,7 +8,7 @@
 -->
 <x-layouts.app>
     <nav class="flex" aria-label="Breadcrumb">
-        <ol role="list" class="flex space-x-4 rounded-md bg-white px-6 shadow">
+        <ol role="list" class="flex space-x-4 rounded-full bg-white px-6 shadow">
             <li class="flex">
                 <div class="flex items-center">
                     <a href="/project/{{ $project->id }}">
@@ -38,11 +38,11 @@
     <div class="mx-auto max-w-7xl pt-6 px-6 lg:px-8">
         <div class="mx-auto max-w-2xl lg:mx-0 lg:max-w-none">
             <h1 class="text-3xl font-bold">{{ \Carbon\Carbon::parse($report->report_date)->format('F Y') }}</h1>
-            <p class="mt-2 text-4xl font-semibold tracking-tight bg-[linear-gradient(130deg,#003E4A_0.69%,#112629_50.19%,#FC7B3E_79.69%)] bg-clip-text text-transparent sm:text-5xl">
+            <p
+                class="mt-2 text-4xl font-semibold tracking-tight bg-[linear-gradient(130deg,#003E4A_0.69%,#112629_50.19%,#FC7B3E_79.69%)] bg-clip-text text-transparent sm:text-5xl">
                 Monthly
                 Marketing Report</p>
-            <div
-                class="mt-6 grid max-w-xl grid-cols-1 gap-8 text-base/7 text-gray-700 ">
+            <div class="mt-6 grid max-w-xl grid-cols-1 gap-8 text-base/7 text-gray-700 ">
                 <div class="border p-4 rounded-lg bg-gray-100">
                     {!! str($report->report_summary)->sanitizeHtml() !!}
                 </div>
@@ -137,7 +137,7 @@
                     last 30 days is below.</p>
             </div>
 
-            <livewire:recent-wordpress-posts :project="$project" :month="2025-03" />
+            <livewire:recent-wordpress-posts :project="$project" :month="2025 - 03" />
         </div>
     </div>
 
